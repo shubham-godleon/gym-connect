@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "friendships", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"user_id", "friend_id"})
+    @UniqueConstraint(columnNames = {"requester_id", "addressee_id"})
 })
 @Data
 @NoArgsConstructor
@@ -18,15 +18,15 @@ public class Friendship {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(name = "user_id", nullable = false)
-    private String userId;
+    @Column(name = "requester_id", nullable = false)
+    private String requesterId;
 
-    @Column(name = "friend_id", nullable = false)
-    private String friendId;
+    @Column(name = "addressee_id", nullable = false)
+    private String addresseeId;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private FriendshipStatus status;
+    private FriendshipStatus status = FriendshipStatus.PENDING;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -34,9 +34,10 @@ public class Friendship {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        if (status == null) status = FriendshipStatus.PENDING;
     }
 
     public enum FriendshipStatus {
-        PENDING, ACCEPTED, BLOCKED
+        PENDING, ACCEPTED, DECLINED
     }
 }

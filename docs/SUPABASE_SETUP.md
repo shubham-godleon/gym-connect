@@ -1,171 +1,122 @@
-# Supabase Integration Guide
+# Supabase Setup Guide
 
-Supabase is used for authentication, real-time database, and data storage.
+Supabase provides the PostgreSQL database, authentication, and real-time subscriptions.
 
-## Setup Steps
+## 1. Create Project
 
-### 1. Create Supabase Project
+1. Go to [supabase.com](https://supabase.com) → New project
+2. Name it `gym-connect`, pick a region close to you, set a strong DB password
+3. Wait ~2 minutes for provisioning
 
-1. Go to [supabase.com](https://supabase.com)
-2. Sign in and create a new project
-3. Choose PostgreSQL database and set a strong password
-4. Note your project URL and API keys
+## 2. Get API Keys
 
-### 2. Get API Keys
+Settings → API → copy:
+- **Project URL** → `https://xxxxxxxxxxxx.supabase.co`
+- **anon** public key → used in the mobile app
+- **service_role** secret key → used in the backend (never expose publicly)
 
-- In Supabase dashboard, go to Settings > API
-- Copy:
-  - `Project URL`
-  - `anon` key (public key for frontend)
-  - `service_role` key (for backend)
+Settings → Database → Connection string → URI tab → copy the full `postgresql://...` string
 
-### 3. Configure Mobile App
+## 3. Run Database Schema
 
-Create `.env` file in `mobile/`:
-
-```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-API_BASE_URL=http://localhost:8080/api
-```
-
-### 4. Configure Backend
-
-Create `application.yml` in `backend/src/main/resources/`:
-
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://your-project.supabase.co:5432/postgres
-    username: postgres
-    password: your-password
-```
-
-## Database Schema
-
-The following tables need to be created:
-
-### users
+Go to **SQL Editor** and paste the entire block below, then click Run:
 
 ```sql
+-- Users
 CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email VARCHAR(255) UNIQUE NOT NULL,
   display_name VARCHAR(255) NOT NULL,
   photo_url VARCHAR(512),
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-### personal_records
-
-```sql
-CREATE TABLE personal_records (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(id),
-  machine_id VARCHAR(255),
-  machine_name VARCHAR(255),
-  weight DECIMAL(10, 2) NOT NULL,
-  reps INTEGER,
-  date TIMESTAMP,
-  created_at TIMESTAMP DEFAULT NOW()
+  home_gym_name VARCHAR(255),
+  streak_count INTEGER NOT NULL DEFAULT 0,
+  longest_streak INTEGER NOT NULL DEFAULT 0,
+  last_checkin_date DATE,
+  fcm_token VARCHAR(512),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_prs_user ON personal_records(user_id);
-CREATE INDEX idx_prs_machine ON personal_records(machine_id);
-```
-
-### friendships
-
-```sql
+-- Friendships
 CREATE TABLE friendships (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(id),
-  friend_id UUID NOT NULL REFERENCES users(id),
-  status VARCHAR(50) DEFAULT 'ACCEPTED',
-  created_at TIMESTAMP DEFAULT NOW(),
-  UNIQUE(user_id, friend_id)
+  requester_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  addressee_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status VARCHAR(20) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'ACCEPTED', 'DECLINED')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(requester_id, addressee_id)
 );
 
-CREATE INDEX idx_friendships_user ON friendships(user_id);
-```
+CREATE INDEX idx_friendships_requester ON friendships(requester_id);
+CREATE INDEX idx_friendships_addressee ON friendships(addressee_id);
 
-### feed_events
-
-```sql
-CREATE TABLE feed_events (
+-- Checkins (core action — user arrives at the gym)
+CREATE TABLE checkins (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(id),
-  user_name VARCHAR(255),
-  user_photo_url VARCHAR(512),
-  type VARCHAR(50),
-  machine_id VARCHAR(255),
-  machine_name VARCHAR(255),
-  pr_weight DECIMAL(10, 2),
-  timestamp TIMESTAMP DEFAULT NOW()
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  gym_name VARCHAR(255) NOT NULL,
+  note VARCHAR(280),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_feed_user ON feed_events(user_id);
-```
+CREATE INDEX idx_checkins_user ON checkins(user_id);
+CREATE INDEX idx_checkins_created_at ON checkins(created_at DESC);
 
-### machines
-
-```sql
-CREATE TABLE machines (
+-- Reactions (fist bumps — one per user per checkin)
+CREATE TABLE reactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL,
-  category VARCHAR(100),
-  gym_id VARCHAR(255),
-  created_at TIMESTAMP DEFAULT NOW()
+  checkin_id UUID NOT NULL REFERENCES checkins(id) ON DELETE CASCADE,
+  from_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(checkin_id, from_user_id)
 );
 
-CREATE INDEX idx_machines_name ON machines(name);
+CREATE INDEX idx_reactions_checkin ON reactions(checkin_id);
+
+-- Auto-update updated_at on users
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER users_updated_at
+  BEFORE UPDATE ON users
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 ```
 
-## Real-Time Features
+## 4. Enable Realtime
 
-Enable Realtime for these tables:
+Dashboard → Database → Replication → enable for:
+- `checkins`
+- `reactions`
 
-1. Go to Supabase Dashboard
-2. Navigate to Database > Replication
-3. Enable for: `feed_events`, `personal_records`, `friendships`
+## 5. Configure the Apps
 
-## Authentication
-
-Supabase handles email/password and OAuth (Google, Facebook):
-
-```typescript
-// Email signup
-const { data, error } = await supabase.auth.signUp({
-  email: "user@example.com",
-  password: "password123",
-});
-
-// Email login
-const { data, error } = await supabase.auth.signInWithPassword({
-  email: "user@example.com",
-  password: "password123",
-});
-
-// OAuth
-const { data, error } = await supabase.auth.signInWithOAuth({
-  provider: "google",
-});
+### Mobile (`mobile/.env`)
+```env
+SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
 ```
 
-## Backup & Migrations
-
-Supabase automatically backs up daily. You can download backups from:
-
-- Settings > Backups in Supabase Dashboard
-
-For local development, use:
-
-```bash
-# Export data
-pg_dump -h your-project.supabase.co -U postgres > backup.sql
-
-# Import data
-psql -h localhost -U postgres < backup.sql
+### Backend (`backend/src/main/resources/application.yml`)
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://db.xxxxxxxxxxxx.supabase.co:5432/postgres
+    username: postgres
+    password: your-db-password
 ```
+
+## Table Summary
+
+| Table | Purpose |
+|---|---|
+| `users` | Profile, home gym, streak data, FCM token |
+| `friendships` | Friend requests (PENDING / ACCEPTED / DECLINED) |
+| `checkins` | Core action — user checks into the gym |
+| `reactions` | Fist bump on a checkin (one per user per checkin) |
+
+Weekly leaderboard and activity feed are derived from `checkins` + `reactions` via queries — no extra tables needed.

@@ -7,11 +7,11 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "feed_events")
+@Table(name = "checkins")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class FeedEvent {
+public class Checkin {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
@@ -20,31 +20,15 @@ public class FeedEvent {
     private String userId;
 
     @Column(nullable = false)
-    private String userName;
+    private String gymName;
 
-    private String userPhotoURL;
-
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private EventType type;
-
-    private String machineId;
-
-    private String machineName;
-
-    private Double prWeight;
+    private String note;
 
     @Column(nullable = false)
-    private LocalDateTime timestamp;
+    private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
-        if (timestamp == null) {
-            timestamp = LocalDateTime.now();
-        }
-    }
-
-    public enum EventType {
-        CHECKIN, PR
+        createdAt = LocalDateTime.now();
     }
 }

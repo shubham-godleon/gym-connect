@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -22,7 +23,19 @@ public class User {
     @Column(nullable = false)
     private String displayName;
 
-    private String photoURL;
+    private String photoUrl;
+
+    private String homeGymName;
+
+    @Column(nullable = false)
+    private Integer streakCount = 0;
+
+    @Column(nullable = false)
+    private Integer longestStreak = 0;
+
+    private LocalDate lastCheckinDate;
+
+    private String fcmToken;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -34,6 +47,8 @@ public class User {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (streakCount == null) streakCount = 0;
+        if (longestStreak == null) longestStreak = 0;
     }
 
     @PreUpdate
