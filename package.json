@@ -1,0 +1,26 @@
+{
+  "name": "gym-connect",
+  "version": "1.0.0",
+  "description": "A mobile app for fitness enthusiasts to connect and track personal records",
+  "private": true,
+  "workspaces": [
+    "mobile",
+    "backend"
+  ],
+  "scripts": {
+    "mobile:install": "cd mobile && npm install --legacy-peer-deps",
+    "mobile:start": "cd mobile && npx expo start",
+    "backend:install": "cd backend && mvn clean install",
+    "backend:start": "cd backend && ./mvnw spring-boot:run",
+    "install:all": "npm install --legacy-peer-deps && npm run mobile:install"
+  },
+  "keywords": [
+    "fitness",
+    "social",
+    "gym",
+    "personal-records",
+    "leaderboard"
+  ],
+  "author": "",
+  "license": "MIT"
+}

@@ -1,0 +1,30 @@
+spring.application.name=gym-connect-api
+spring.profiles.active=dev
+
+# Server
+server.port=8080
+server.servlet.context-path=/api
+
+# Database - Supabase PostgreSQL
+spring.datasource.url=jdbc:postgresql://localhost:5432/gym_connect
+spring.datasource.username=postgres
+spring.datasource.password=password
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# JPA/Hibernate
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQL10Dialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.jdbc.batch_size=20
+
+# JWT
+jwt.secret=your-secret-key-change-in-production
+jwt.expiration=86400000
+
+# Firebase
+firebase.credentials.path=classpath:firebase-service-account.json
+
+# Logging
+logging.level.root=INFO
+logging.level.com.gymconnect=DEBUG

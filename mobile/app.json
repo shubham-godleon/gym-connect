@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "sdkVersion": "54.0.0",
+    "name": "Gym Connect",
+    "slug": "gym-connect",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTabletMode": true,
+      "bundleIdentifier": "com.gymconnect.app"
+    },
+    "android": {
+      "package": "com.gymconnect.app"
+    },
+    "plugins": [
+      "expo-notifications",
+      "@react-native-google-signin/google-signin"
+    ]
+  }
+}

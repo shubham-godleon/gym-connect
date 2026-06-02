@@ -1,0 +1,8 @@
+# Development Properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/gym_connect_dev
+spring.datasource.username=postgres
+spring.datasource.password=dev_password
+
+logging.level.org.springframework.web=DEBUG
+logging.level.org.hibernate.SQL=DEBUG
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
