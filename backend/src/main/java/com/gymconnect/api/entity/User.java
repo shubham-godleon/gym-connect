@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "users")
@@ -36,6 +37,12 @@ public class User {
     private LocalDate lastCheckinDate;
 
     private String fcmToken;
+
+    // Comma-separated days e.g. "MON,WED,FRI"
+    private String nudgeDays;
+
+    // Time to send the nudge e.g. 07:15
+    private LocalTime nudgeTime;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

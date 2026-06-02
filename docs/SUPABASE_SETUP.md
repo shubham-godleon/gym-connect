@@ -33,6 +33,8 @@ CREATE TABLE users (
   longest_streak INTEGER NOT NULL DEFAULT 0,
   last_checkin_date DATE,
   fcm_token VARCHAR(512),
+  nudge_days VARCHAR(50),   -- e.g. 'MON,WED,FRI'
+  nudge_time TIME,          -- e.g. 07:15
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

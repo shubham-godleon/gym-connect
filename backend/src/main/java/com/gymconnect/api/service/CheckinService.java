@@ -3,12 +3,14 @@ package com.gymconnect.api.service;
 import com.gymconnect.api.dto.CheckinDTO;
 import com.gymconnect.api.dto.LeaderboardEntryDTO;
 import com.gymconnect.api.entity.Checkin;
+import com.gymconnect.api.entity.Friendship;
 import com.gymconnect.api.entity.User;
 import com.gymconnect.api.repository.CheckinRepository;
 import com.gymconnect.api.repository.FriendshipRepository;
 import com.gymconnect.api.repository.ReactionRepository;
 import com.gymconnect.api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,8 @@ public class CheckinService {
     private final ReactionRepository reactionRepository;
     private final FriendshipRepository friendshipRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
+    @Lazy private final NudgeSchedulerService nudgeSchedulerService;
 
     @Transactional
     public CheckinDTO checkin(String userId, String gymName, String note) {
@@ -38,11 +42,13 @@ public class CheckinService {
 
         Checkin checkin = new Checkin();
         checkin.setUserId(userId);
-        checkin.setGymName(gymName);
+        checkin.setGymName(gymName != null ? gymName : user.getHomeGymName());
         checkin.setNote(note);
         checkinRepository.save(checkin);
 
         updateStreak(user);
+        notifyFriends(user, checkin.getGymName());
+        nudgeSchedulerService.recomputePattern(userId);
 
         return toDTO(checkin, user, 0, false);
     }
@@ -88,6 +94,16 @@ public class CheckinService {
         return board;
     }
 
+    private void notifyFriends(User user, String gymName) {
+        List<String> friendIds = getAcceptedFriendIds(user.getId());
+        if (friendIds.isEmpty()) return;
+
+        userRepository.findAllById(friendIds).stream()
+                .filter(f -> f.getFcmToken() != null)
+                .forEach(f -> notificationService.sendCheckinAlert(
+                        f.getFcmToken(), user.getDisplayName(), gymName));
+    }
+
     private void updateStreak(User user) {
         LocalDate today = LocalDate.now();
         LocalDate last = user.getLastCheckinDate();
@@ -97,7 +113,7 @@ public class CheckinService {
         } else if (last.equals(today.minusDays(1))) {
             user.setStreakCount(user.getStreakCount() + 1);
         }
-        // same day checkin — no streak change
+        // same day check-in — no streak change
 
         if (user.getStreakCount() > user.getLongestStreak()) {
             user.setLongestStreak(user.getStreakCount());
@@ -107,7 +123,7 @@ public class CheckinService {
     }
 
     private List<String> getAcceptedFriendIds(String userId) {
-        return friendshipRepository.findByUserAndStatus(userId, com.gymconnect.api.entity.Friendship.FriendshipStatus.ACCEPTED)
+        return friendshipRepository.findByUserAndStatus(userId, Friendship.FriendshipStatus.ACCEPTED)
                 .stream()
                 .map(f -> f.getRequesterId().equals(userId) ? f.getAddresseeId() : f.getRequesterId())
                 .collect(Collectors.toList());
