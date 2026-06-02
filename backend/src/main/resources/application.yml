@@ -6,9 +6,9 @@ server.port=8080
 server.servlet.context-path=/api
 
 # Database - Supabase PostgreSQL
-spring.datasource.url=jdbc:postgresql://localhost:5432/gym_connect
+spring.datasource.url=jdbc:postgresql://db.hstfthcqypkdhsefksvn.supabase.co:5432/postgres
 spring.datasource.username=postgres
-spring.datasource.password=password
+spring.datasource.password=uUfC?X9VnixeKt3
 spring.datasource.driver-class-name=org.postgresql.Driver
 
 # JPA/Hibernate

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1014570929164",
+    "project_id": "gym-connect-81935",
+    "storage_bucket": "gym-connect-81935.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1014570929164:android:a97ecf87de5d4dd1d5b229",
+        "android_client_info": {
+          "package_name": "com.gymconnect.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBOayj824FbQsGZCaqYn7LOX47HWdUIMXw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
