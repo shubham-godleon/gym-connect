@@ -44,10 +44,14 @@ target/
 # Spring Boot
 .m2/
 application-*.properties
+backend/src/main/resources/application.yml
+backend/src/main/resources/application-dev.yml
 
 # Firebase credentials (sensitive - never commit)
 firebase-service-account.json
 *-service-account.json
+google-services.json
+GoogleService-Info.plist
 
 # OS
 Thumbs.db
