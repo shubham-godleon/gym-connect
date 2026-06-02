@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "friendships", uniqueConstraints = {
@@ -16,13 +17,13 @@ import java.time.LocalDateTime;
 public class Friendship {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    private UUID id;
 
     @Column(name = "requester_id", nullable = false)
-    private String requesterId;
+    private UUID requesterId;
 
     @Column(name = "addressee_id", nullable = false)
-    private String addresseeId;
+    private UUID addresseeId;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

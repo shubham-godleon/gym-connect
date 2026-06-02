@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class ReactionService {
@@ -20,7 +22,7 @@ public class ReactionService {
     private final NotificationService notificationService;
 
     @Transactional
-    public boolean toggleReaction(String checkinId, String fromUserId) {
+    public boolean toggleReaction(UUID checkinId, UUID fromUserId) {
         return reactionRepository.findByCheckinIdAndFromUserId(checkinId, fromUserId)
                 .map(existing -> {
                     reactionRepository.delete(existing);
@@ -36,7 +38,7 @@ public class ReactionService {
                 });
     }
 
-    private void notifyCheckinOwner(String checkinId, String fromUserId) {
+    private void notifyCheckinOwner(UUID checkinId, UUID fromUserId) {
         checkinRepository.findById(checkinId).ifPresent(checkin -> {
             if (checkin.getUserId().equals(fromUserId)) return; // don't notify self
             userRepository.findById(checkin.getUserId()).ifPresent(owner -> {

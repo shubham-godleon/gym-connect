@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/users")
@@ -16,7 +17,7 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserDTO> getUser(@PathVariable String id) {
+    public ResponseEntity<UserDTO> getUser(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
@@ -31,12 +32,12 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserDTO> updateUser(@PathVariable String id, @RequestBody UserDTO dto) {
+    public ResponseEntity<UserDTO> updateUser(@PathVariable UUID id, @RequestBody UserDTO dto) {
         return ResponseEntity.ok(userService.updateUser(id, dto));
     }
 
     @PutMapping("/{id}/fcm-token")
-    public ResponseEntity<Void> updateFcmToken(@PathVariable String id, @RequestBody Map<String, String> body) {
+    public ResponseEntity<Void> updateFcmToken(@PathVariable UUID id, @RequestBody Map<String, String> body) {
         userService.updateFcmToken(id, body.get("fcmToken"));
         return ResponseEntity.ok().build();
     }

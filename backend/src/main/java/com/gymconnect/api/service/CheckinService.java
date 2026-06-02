@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,7 +37,7 @@ public class CheckinService {
     @Lazy private final NudgeSchedulerService nudgeSchedulerService;
 
     @Transactional
-    public CheckinDTO checkin(String userId, String gymName, String note) {
+    public CheckinDTO checkin(UUID userId, String gymName, String note) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -53,12 +54,12 @@ public class CheckinService {
         return toDTO(checkin, user, 0, false);
     }
 
-    public List<CheckinDTO> getFriendsFeed(String userId) {
-        List<String> friendIds = getAcceptedFriendIds(userId);
+    public List<CheckinDTO> getFriendsFeed(UUID userId) {
+        List<UUID> friendIds = getAcceptedFriendIds(userId);
         friendIds.add(userId);
 
         User me = userRepository.findById(userId).orElseThrow();
-        Map<String, User> userMap = userRepository.findAllById(friendIds)
+        Map<UUID, User> userMap = userRepository.findAllById(friendIds)
                 .stream().collect(Collectors.toMap(User::getId, u -> u));
 
         return checkinRepository.findFriendsFeed(friendIds).stream()
@@ -71,18 +72,18 @@ public class CheckinService {
                 .collect(Collectors.toList());
     }
 
-    public List<LeaderboardEntryDTO> getWeeklyLeaderboard(String userId) {
-        List<String> friendIds = getAcceptedFriendIds(userId);
+    public List<LeaderboardEntryDTO> getWeeklyLeaderboard(UUID userId) {
+        List<UUID> friendIds = getAcceptedFriendIds(userId);
         friendIds.add(userId);
 
         LocalDateTime weekStart = LocalDate.now()
                 .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
                 .atStartOfDay();
 
-        Map<String, Long> countMap = checkinRepository
+        Map<UUID, Long> countMap = checkinRepository
                 .countCheckinsThisWeekForFriends(friendIds, weekStart)
                 .stream()
-                .collect(Collectors.toMap(r -> (String) r[0], r -> (Long) r[1]));
+                .collect(Collectors.toMap(r -> (UUID) r[0], r -> (Long) r[1]));
 
         List<User> friends = userRepository.findAllById(friendIds);
         List<LeaderboardEntryDTO> board = new ArrayList<>();
@@ -95,7 +96,7 @@ public class CheckinService {
     }
 
     private void notifyFriends(User user, String gymName) {
-        List<String> friendIds = getAcceptedFriendIds(user.getId());
+        List<UUID> friendIds = getAcceptedFriendIds(user.getId());
         if (friendIds.isEmpty()) return;
 
         userRepository.findAllById(friendIds).stream()
@@ -122,7 +123,7 @@ public class CheckinService {
         userRepository.save(user);
     }
 
-    private List<String> getAcceptedFriendIds(String userId) {
+    private List<UUID> getAcceptedFriendIds(UUID userId) {
         return friendshipRepository.findByUserAndStatus(userId, Friendship.FriendshipStatus.ACCEPTED)
                 .stream()
                 .map(f -> f.getRequesterId().equals(userId) ? f.getAddresseeId() : f.getRequesterId())

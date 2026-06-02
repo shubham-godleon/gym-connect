@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,7 +23,7 @@ public class FriendshipService {
     private final NotificationService notificationService;
 
     @Transactional
-    public void sendRequest(String requesterId, String addresseeId) {
+    public void sendRequest(UUID requesterId, UUID addresseeId) {
         friendshipRepository.findBetween(requesterId, addresseeId).ifPresent(f -> {
             throw new RuntimeException("Friendship already exists");
         });
@@ -35,7 +36,7 @@ public class FriendshipService {
     }
 
     @Transactional
-    public void respondToRequest(String friendshipId, String addresseeId, boolean accept) {
+    public void respondToRequest(UUID friendshipId, UUID addresseeId, boolean accept) {
         Friendship friendship = friendshipRepository.findById(friendshipId)
                 .orElseThrow(() -> new RuntimeException("Friend request not found"));
 
@@ -58,7 +59,7 @@ public class FriendshipService {
         }
     }
 
-    public List<UserDTO> getFriends(String userId) {
+    public List<UserDTO> getFriends(UUID userId) {
         return friendshipRepository.findByUserAndStatus(userId, FriendshipStatus.ACCEPTED)
                 .stream()
                 .map(f -> f.getRequesterId().equals(userId) ? f.getAddresseeId() : f.getRequesterId())
@@ -68,12 +69,12 @@ public class FriendshipService {
                 .collect(Collectors.toList());
     }
 
-    public List<Friendship> getPendingRequests(String userId) {
+    public List<Friendship> getPendingRequests(UUID userId) {
         return friendshipRepository.findPendingRequestsFor(userId);
     }
 
     @Transactional
-    public void removeFriend(String userId, String friendId) {
+    public void removeFriend(UUID userId, UUID friendId) {
         friendshipRepository.findBetween(userId, friendId)
                 .ifPresent(friendshipRepository::delete);
     }

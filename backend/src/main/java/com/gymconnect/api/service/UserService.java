@@ -6,13 +6,15 @@ import com.gymconnect.api.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
 
-    public UserDTO getUserById(String id) {
+    public UserDTO getUserById(UUID id) {
         return userRepository.findById(id)
                 .map(this::toDTO)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -33,7 +35,7 @@ public class UserService {
         return toDTO(userRepository.save(user));
     }
 
-    public UserDTO updateUser(String id, UserDTO dto) {
+    public UserDTO updateUser(UUID id, UserDTO dto) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -44,7 +46,7 @@ public class UserService {
         return toDTO(userRepository.save(user));
     }
 
-    public void updateFcmToken(String id, String fcmToken) {
+    public void updateFcmToken(UUID id, String fcmToken) {
         userRepository.findById(id).ifPresent(user -> {
             user.setFcmToken(fcmToken);
             userRepository.save(user);

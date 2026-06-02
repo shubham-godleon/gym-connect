@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,7 +46,7 @@ public class NudgeSchedulerService {
     }
 
     // Called after each check-in to recompute this user's pattern
-    public void recomputePattern(String userId) {
+    public void recomputePattern(UUID userId) {
         User user = userRepository.findById(userId).orElse(null);
         if (user == null) return;
 
@@ -89,7 +90,7 @@ public class NudgeSchedulerService {
         return diff < 15 * 60;
     }
 
-    private boolean hasCheckedInToday(String userId) {
+    private boolean hasCheckedInToday(UUID userId) {
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
         return checkinRepository.existsByUserIdAndCreatedAtBetween(userId, startOfDay, startOfDay.plusDays(1));
     }

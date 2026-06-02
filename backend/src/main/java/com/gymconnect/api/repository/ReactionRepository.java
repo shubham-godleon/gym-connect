@@ -4,14 +4,15 @@ import com.gymconnect.api.entity.Reaction;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-public interface ReactionRepository extends JpaRepository<Reaction, String> {
+public interface ReactionRepository extends JpaRepository<Reaction, UUID> {
 
-    List<Reaction> findByCheckinId(String checkinId);
+    List<Reaction> findByCheckinId(UUID checkinId);
 
-    int countByCheckinId(String checkinId);
+    int countByCheckinId(UUID checkinId);
 
-    boolean existsByCheckinIdAndFromUserId(String checkinId, String fromUserId);
+    boolean existsByCheckinIdAndFromUserId(UUID checkinId, UUID fromUserId);
 
-    Optional<Reaction> findByCheckinIdAndFromUserId(String checkinId, String fromUserId);
+    Optional<Reaction> findByCheckinIdAndFromUserId(UUID checkinId, UUID fromUserId);
 }

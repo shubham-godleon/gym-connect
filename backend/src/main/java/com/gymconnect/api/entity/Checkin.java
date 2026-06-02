@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "checkins")
@@ -14,10 +15,10 @@ import java.time.LocalDateTime;
 public class Checkin {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    private UUID id;
 
     @Column(name = "user_id", nullable = false)
-    private String userId;
+    private UUID userId;
 
     @Column(nullable = false)
     private String gymName;

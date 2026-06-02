@@ -85,13 +85,6 @@
             <version>9.2.0</version>
         </dependency>
 
-        <!-- Supabase Java Client -->
-        <dependency>
-            <groupId>io.supabase</groupId>
-            <artifactId>supabase-java</artifactId>
-            <version>0.2.0</version>
-        </dependency>
-
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
