@@ -1,64 +1,44 @@
-// User types
+// User profile (matches backend UserDTO)
 export interface User {
   id: string;
   email: string;
   displayName: string;
-  photoURL?: string;
-  createdAt: string;
-  updatedAt: string;
+  photoUrl?: string;
+  homeGymName?: string;
+  streakCount: number;
+  longestStreak: number;
+  lastCheckinDate?: string;
 }
 
-// PR (Personal Record) types
-export interface PersonalRecord {
+// Checkin (matches backend CheckinDTO)
+export interface Checkin {
   id: string;
   userId: string;
-  machineId: string;
-  machineName: string;
-  weight: number;
-  reps?: number;
-  date: string;
+  displayName: string;
+  photoUrl?: string;
+  gymName: string;
+  note?: string;
+  reactionCount: number;
+  reactedByMe: boolean;
   createdAt: string;
 }
 
-// Machine types
-export interface Machine {
-  id: string;
-  name: string;
-  category: string;
-  gymId: string;
+// Leaderboard entry (matches backend LeaderboardEntryDTO)
+export interface LeaderboardEntry {
+  userId: string;
+  displayName: string;
+  photoUrl?: string;
+  checkinsThisWeek: number;
+  streakCount: number;
 }
 
-// Friendship types
+// Friendship (matches backend Friendship entity)
 export interface Friendship {
   id: string;
-  userId: string;
-  friendId: string;
-  status: 'pending' | 'accepted' | 'blocked';
+  requesterId: string;
+  addresseeId: string;
+  status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
   createdAt: string;
-}
-
-// Feed types
-export interface FeedEvent {
-  id: string;
-  userId: string;
-  userName: string;
-  userPhotoURL?: string;
-  type: 'checkin' | 'pr';
-  machineId?: string;
-  machineName?: string;
-  prWeight?: number;
-  timestamp: string;
-}
-
-// Ranking types
-export interface Ranking {
-  userId: string;
-  userName: string;
-  userPhotoURL?: string;
-  machineId: string;
-  machineName: string;
-  weight: number;
-  rank: number;
 }
 
 // Auth types

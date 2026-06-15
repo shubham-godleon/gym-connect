@@ -1,17 +1,15 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice';
 import userReducer from './slices/userSlice';
-import prReducer from './slices/prSlice';
+import checkinReducer from './slices/checkinSlice';
 import friendReducer from './slices/friendSlice';
-import feedReducer from './slices/feedSlice';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     user: userReducer,
-    pr: prReducer,
+    checkin: checkinReducer,
     friend: friendReducer,
-    feed: feedReducer,
   },
 });
 

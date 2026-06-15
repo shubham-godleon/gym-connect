@@ -9,33 +9,33 @@ const getEnv = (key: string, defaultValue = ''): string => {
 
 // Firebase configuration
 export const firebaseConfig = {
-  apiKey: getEnv('FIREBASE_API_KEY'),
-  authDomain: getEnv('FIREBASE_AUTH_DOMAIN'),
-  projectId: getEnv('FIREBASE_PROJECT_ID'),
-  storageBucket: getEnv('FIREBASE_STORAGE_BUCKET'),
-  messagingSenderId: getEnv('FIREBASE_MESSAGING_SENDER_ID'),
-  appId: getEnv('FIREBASE_APP_ID'),
+  apiKey: getEnv('EXPO_PUBLIC_FIREBASE_API_KEY'),
+  authDomain: getEnv('EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN'),
+  projectId: getEnv('EXPO_PUBLIC_FIREBASE_PROJECT_ID'),
+  storageBucket: getEnv('EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET'),
+  messagingSenderId: getEnv('EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'),
+  appId: getEnv('EXPO_PUBLIC_FIREBASE_APP_ID'),
 };
 
 // Supabase configuration
 export const supabaseConfig = {
-  url: getEnv('SUPABASE_URL', 'https://your-project.supabase.co'),
-  anonKey: getEnv('SUPABASE_ANON_KEY', 'your-anon-key-here'),
+  url: getEnv('EXPO_PUBLIC_SUPABASE_URL', 'https://your-project.supabase.co'),
+  anonKey: getEnv('EXPO_PUBLIC_SUPABASE_ANON_KEY', 'your-anon-key-here'),
 };
 
 // API configuration
 export const apiConfig = {
-  baseURL: getEnv('API_BASE_URL', 'http://localhost:8080/api'),
+  baseURL: getEnv('EXPO_PUBLIC_API_BASE_URL', 'http://localhost:8080/api'),
   timeout: 10000,
 };
 
 // Google Sign-In configuration
 export const googleConfig = {
-  iosClientId: getEnv('GOOGLE_IOS_CLIENT_ID'),
-  androidClientId: getEnv('GOOGLE_ANDROID_CLIENT_ID'),
+  iosClientId: getEnv('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'),
+  androidClientId: getEnv('EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID'),
 };
 
 // Facebook configuration
 export const facebookConfig = {
-  appId: getEnv('FACEBOOK_APP_ID'),
+  appId: getEnv('EXPO_PUBLIC_FACEBOOK_APP_ID'),
 };

@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { User } from '@/types';
 import apiService from '@/services/apiService';
 
-interface UserState {
+export interface UserState {
   profile: User | null;
   isLoading: boolean;
   error: string | null;

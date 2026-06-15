@@ -9,6 +9,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -74,7 +76,7 @@ export const notificationService = {
         body: 'This is a test notification from Gym Connect',
         data: { type: 'test' },
       },
-      trigger: { seconds: 2 },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 2, repeats: false },
     });
   },
 

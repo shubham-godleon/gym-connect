@@ -46,31 +46,20 @@ export const supabaseService = {
   },
 
   // Real-time subscriptions
-  subscribeToUserProfile: (userId: string, callback: Function) => {
+  subscribeToUserProfile: (userId: string, callback: (payload: any) => void) => {
     return supabase
-      .from('users')
-      .on('*', (payload) => {
+      .channel(`user-${userId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'users', filter: `id=eq.${userId}` }, (payload) => {
         callback(payload);
       })
       .subscribe();
   },
 
-  subscribeToPRs: (userId: string, callback: Function) => {
+  subscribeToCheckins: (friendIds: string[], callback: (payload: any) => void) => {
     return supabase
-      .from('personal_records')
-      .on('INSERT', (payload) => {
-        if (payload.new.user_id === userId) {
-          callback(payload.new);
-        }
-      })
-      .subscribe();
-  },
-
-  subscribeToFeed: (friendIds: string[], callback: Function) => {
-    return supabase
-      .from('feed_events')
-      .on('INSERT', (payload) => {
-        if (friendIds.includes(payload.new.user_id)) {
+      .channel('checkins-feed')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'checkins' }, (payload) => {
+        if (friendIds.includes((payload.new as any).user_id)) {
           callback(payload.new);
         }
       })

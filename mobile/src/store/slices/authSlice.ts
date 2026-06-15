@@ -1,7 +1,7 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { AuthState, User } from '@/types';
-import supabaseService from '@/services/supabaseService';
-import { setAuthToken } from '@/services/apiService';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { AuthState } from '@/types';
+import { supabaseService } from '@/services/supabaseService';
+import apiService, { setAuthToken } from '@/services/apiService';
 
 const initialState: AuthState = {
   user: null,
@@ -17,7 +17,8 @@ export const signUp = createAsyncThunk(
       const data = await supabaseService.signUp(email, password, displayName);
       if (data.user && data.session) {
         setAuthToken(data.session.access_token);
-        return { user: data.user, token: data.session.access_token };
+        const profile = await apiService.createUser({ email, displayName });
+        return { user: profile, token: data.session.access_token };
       }
       throw new Error('Sign up failed');
     } catch (error: any) {
@@ -33,7 +34,8 @@ export const signIn = createAsyncThunk(
       const data = await supabaseService.signInWithEmail(email, password);
       if (data.user && data.session) {
         setAuthToken(data.session.access_token);
-        return { user: data.user, token: data.session.access_token };
+        const profile = await fetchOrCreateProfile(email, data.user.user_metadata?.displayName);
+        return { user: profile, token: data.session.access_token };
       }
       throw new Error('Sign in failed');
     } catch (error: any) {
@@ -60,8 +62,9 @@ export const restoreToken = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const user = await supabaseService.getCurrentUser();
-      if (user) {
-        return { user, token: 'restored' };
+      if (user && user.email) {
+        const profile = await fetchOrCreateProfile(user.email, user.user_metadata?.displayName);
+        return { user: profile, token: 'restored' };
       }
       return null;
     } catch (error: any) {
@@ -69,6 +72,14 @@ export const restoreToken = createAsyncThunk(
     }
   }
 );
+
+async function fetchOrCreateProfile(email: string, displayName?: string) {
+  try {
+    return await apiService.getUserByEmail(email);
+  } catch {
+    return await apiService.createUser({ email, displayName: displayName || email });
+  }
+}
 
 const authSlice = createSlice({
   name: 'auth',
@@ -86,7 +97,7 @@ const authSlice = createSlice({
       })
       .addCase(signUp.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload.user as any;
+        state.user = action.payload.user;
         state.token = action.payload.token;
       })
       .addCase(signUp.rejected, (state, action) => {
@@ -99,7 +110,7 @@ const authSlice = createSlice({
       })
       .addCase(signIn.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload.user as any;
+        state.user = action.payload.user;
         state.token = action.payload.token;
       })
       .addCase(signIn.rejected, (state, action) => {
@@ -111,11 +122,17 @@ const authSlice = createSlice({
         state.token = null;
         state.isLoading = false;
       })
+      .addCase(restoreToken.pending, (state) => {
+        state.isLoading = true;
+      })
       .addCase(restoreToken.fulfilled, (state, action) => {
         if (action.payload) {
-          state.user = action.payload.user as any;
+          state.user = action.payload.user;
           state.token = action.payload.token;
         }
+        state.isLoading = false;
+      })
+      .addCase(restoreToken.rejected, (state) => {
         state.isLoading = false;
       });
   },

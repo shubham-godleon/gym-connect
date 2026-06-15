@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { apiConfig } from './config';
-import { User, PersonalRecord, FeedEvent, Ranking } from '@/types';
+import { User, Checkin, LeaderboardEntry, Friendship } from '@/types';
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: apiConfig.baseURL,
@@ -17,9 +17,19 @@ export const setAuthToken = (token: string | null) => {
 };
 
 export const apiService = {
-  // User endpoints
+  // Users
   getUserProfile: async (userId: string): Promise<User> => {
     const response = await apiClient.get(`/users/${userId}`);
+    return response.data;
+  },
+
+  getUserByEmail: async (email: string): Promise<User> => {
+    const response = await apiClient.get(`/users/by-email/${email}`);
+    return response.data;
+  },
+
+  createUser: async (data: { id?: string; email: string; displayName: string; photoUrl?: string; homeGymName?: string }): Promise<User> => {
+    const response = await apiClient.post(`/users`, data);
     return response.data;
   },
 
@@ -28,68 +38,52 @@ export const apiService = {
     return response.data;
   },
 
-  // Personal Records
-  getUserPRs: async (userId: string): Promise<PersonalRecord[]> => {
-    const response = await apiClient.get(`/users/${userId}/prs`);
+  updateFcmToken: async (userId: string, fcmToken: string): Promise<void> => {
+    await apiClient.put(`/users/${userId}/fcm-token`, { fcmToken });
+  },
+
+  // Checkins
+  checkin: async (userId: string, gymName?: string, note?: string): Promise<Checkin> => {
+    const response = await apiClient.post(`/checkins`, { userId, gymName, note });
     return response.data;
   },
 
-  createPR: async (userId: string, pr: Omit<PersonalRecord, 'id' | 'userId' | 'createdAt'>): Promise<PersonalRecord> => {
-    const response = await apiClient.post(`/users/${userId}/prs`, pr);
+  getFeed: async (userId: string): Promise<Checkin[]> => {
+    const response = await apiClient.get(`/checkins/feed/${userId}`);
     return response.data;
   },
 
-  getMachinePRLeaderboard: async (machineId: string, friendIds?: string[]): Promise<Ranking[]> => {
-    const response = await apiClient.get(`/machines/${machineId}/leaderboard`, {
-      params: { friendIds: friendIds?.join(',') }
-    });
+  getLeaderboard: async (userId: string): Promise<LeaderboardEntry[]> => {
+    const response = await apiClient.get(`/checkins/leaderboard/${userId}`);
     return response.data;
+  },
+
+  toggleReaction: async (checkinId: string, userId: string): Promise<boolean> => {
+    const response = await apiClient.post(`/checkins/${checkinId}/react`, { userId });
+    return response.data.reacted;
   },
 
   // Friends
   getFriends: async (userId: string): Promise<User[]> => {
-    const response = await apiClient.get(`/users/${userId}/friends`);
+    const response = await apiClient.get(`/friends/${userId}`);
     return response.data;
   },
 
-  addFriend: async (userId: string, friendId: string): Promise<void> => {
-    await apiClient.post(`/users/${userId}/friends/${friendId}`);
+  getPendingRequests: async (userId: string): Promise<Friendship[]> => {
+    const response = await apiClient.get(`/friends/${userId}/pending`);
+    return response.data;
+  },
+
+  sendFriendRequest: async (requesterId: string, addresseeId: string): Promise<void> => {
+    await apiClient.post(`/friends/request`, { requesterId, addresseeId });
+  },
+
+  respondToFriendRequest: async (friendshipId: string, addresseeId: string, accept: boolean): Promise<void> => {
+    await apiClient.put(`/friends/${friendshipId}/respond`, { addresseeId, accept });
   },
 
   removeFriend: async (userId: string, friendId: string): Promise<void> => {
-    await apiClient.delete(`/users/${userId}/friends/${friendId}`);
-  },
-
-  // Feed
-  getFeed: async (userId: string, limit: number = 20): Promise<FeedEvent[]> => {
-    const response = await apiClient.get(`/users/${userId}/feed`, {
-      params: { limit }
-    });
-    return response.data;
-  },
-
-  getCheckIns: async (machineId: string): Promise<any[]> => {
-    const response = await apiClient.get(`/machines/${machineId}/check-ins`);
-    return response.data;
-  },
-
-  createCheckIn: async (userId: string, machineId: string): Promise<any> => {
-    const response = await apiClient.post(`/users/${userId}/check-ins`, {
-      machineId,
-      timestamp: new Date().toISOString()
-    });
-    return response.data;
-  },
-
-  // Machines
-  getAllMachines: async (): Promise<any[]> => {
-    const response = await apiClient.get('/machines');
-    return response.data;
-  },
-
-  getMachineById: async (machineId: string): Promise<any> => {
-    const response = await apiClient.get(`/machines/${machineId}`);
-    return response.data;
+    await apiClient.delete(`/friends`, { data: { userId, friendId } });
   },
 };
 
