@@ -1,102 +1,85 @@
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import axios from 'axios';
-import { apiConfig } from './config';
+import { firebaseConfig } from './config';
 
-// Set notification handler
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// Returns a real FCM registration token usable with the backend's Firebase
+// Admin SDK send() call. expo-notifications' getDevicePushTokenAsync()
+// deliberately isn't used here: on iOS it returns a raw APNs token, not an
+// FCM token, so it can't be passed straight to Admin SDK's send().
+export async function registerForPushNotifications(): Promise<string | null> {
+  if (Platform.OS === 'web') {
+    return registerWebPush();
+  }
+  if (Platform.OS === 'android') {
+    return registerAndroidPush();
+  }
+  // iOS native push (via @react-native-firebase/messaging + APNs key
+  // uploaded to the Firebase project) is not wired up yet.
+  return null;
+}
 
-export const notificationService = {
-  // Request permissions and get device token
-  registerForNotifications: async () => {
-    try {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-      }
-
-      if (finalStatus !== 'granted') {
-        console.warn('Notification permissions not granted');
-        return null;
-      }
-
-      try {
-        const token = (await Notifications.getExpoPushTokenAsync()).data;
-        
-        if (Platform.OS === 'android') {
-          await Notifications.setNotificationChannelAsync('default', {
-            name: 'default',
-            importance: Notifications.AndroidImportance.MAX,
-            vibrationPattern: [0, 250, 250, 250],
-            lightColor: '#FF231F7C',
-          });
-        }
-
-        return token;
-      } catch (firebaseError) {
-        console.warn('Firebase notifications not configured - skipping for now');
-        return null;
-      }
-    } catch (error) {
-      console.error('Failed to register for notifications:', error);
+async function registerWebPush(): Promise<string | null> {
+  console.log('[push] registerWebPush: starting');
+  try {
+    if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator)) {
+      console.log('[push] registerWebPush: window/Notification/serviceWorker unsupported, aborting');
       return null;
     }
-  },
-
-  // Save device token to backend
-  saveDeviceToken: async (userId: string, token: string) => {
-    try {
-      const response = await axios.post(
-        `${apiConfig.baseURL}/users/${userId}/device-tokens`,
-        { token, platform: Platform.OS }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Failed to save device token:', error);
-      throw error;
+    if (!firebaseConfig.vapidKey) {
+      console.warn('Missing EXPO_PUBLIC_FIREBASE_VAPID_KEY — skipping web push registration');
+      return null;
     }
-  },
 
-  // Send test notification
-  sendTestNotification: async () => {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'Test Notification',
-        body: 'This is a test notification from Gym Connect',
-        data: { type: 'test' },
-      },
-      trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 2, repeats: false },
+    const permission = await Notification.requestPermission();
+    console.log('[push] registerWebPush: permission =', permission);
+    if (permission !== 'granted') return null;
+
+    const { initializeApp } = await import('firebase/app');
+    const { getMessaging, getToken } = await import('firebase/messaging');
+    console.log('[push] registerWebPush: firebase modules loaded');
+
+    const app = initializeApp(firebaseConfig);
+    await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    console.log('[push] registerWebPush: service worker register() resolved');
+    // register() resolves as soon as the worker exists, but it may still be
+    // installing — wait for it to actually become active before subscribing.
+    const registration = await navigator.serviceWorker.ready;
+    console.log('[push] registerWebPush: service worker ready, active =', !!registration.active);
+    const messaging = getMessaging(app);
+
+    const token = await getToken(messaging, {
+      vapidKey: firebaseConfig.vapidKey,
+      serviceWorkerRegistration: registration,
     });
-  },
+    console.log('[push] registerWebPush: got token =', token ? `${token.slice(0, 12)}...` : token);
+    return token || null;
+  } catch (error) {
+    console.warn('Web push registration failed:', error);
+    return null;
+  }
+}
 
-  // Handle notification received
-  listenToNotifications: (callback: Function) => {
-    const subscription = Notifications.addNotificationReceivedListener((notification) => {
-      callback(notification);
-    });
+async function registerAndroidPush(): Promise<string | null> {
+  try {
+    // Dynamically imported so the JS bundle for web/iOS never references
+    // this native-only module before it's actually installed/configured.
+    const messagingModule = await import('@react-native-firebase/messaging');
+    const messaging = messagingModule.default();
 
-    return subscription;
-  },
+    const authStatus = await messaging.requestPermission();
+    const enabled =
+      authStatus === messagingModule.AuthorizationStatus.AUTHORIZED ||
+      authStatus === messagingModule.AuthorizationStatus.PROVISIONAL;
+    if (!enabled) return null;
 
-  // Handle notification response (when user taps on notification)
-  listenToNotificationResponse: (callback: Function) => {
-    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      callback(response.notification);
-    });
+    return await messaging.getToken();
+  } catch (error) {
+    console.warn('Android push registration failed (is @react-native-firebase/messaging installed and configured?):', error);
+    return null;
+  }
+}
 
-    return subscription;
-  },
+export const notificationService = {
+  registerForPushNotifications,
 };
 
 export default notificationService;

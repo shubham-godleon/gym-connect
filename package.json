@@ -22,5 +22,8 @@
     "leaderboard"
   ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "react-dom": "^19.2.7"
+  }
 }

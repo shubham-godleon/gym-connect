@@ -6,6 +6,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { restoreToken } from '@/store/slices/authSlice';
 import { colors } from '@/utils/theme';
+import { registerForPushNotifications } from '@/services/notificationService';
+import apiService from '@/services/apiService';
 
 import LoginScreen from '@/screens/auth/LoginScreen';
 import SignUpScreen from '@/screens/auth/SignUpScreen';
@@ -109,6 +111,17 @@ function RootNavigator() {
 
     bootstrapAsync();
   }, [dispatch]);
+
+  useEffect(() => {
+    if (!user) return;
+    registerForPushNotifications().then((token) => {
+      if (token) {
+        apiService.updateFcmToken(user.id, token).catch((err) => {
+          console.warn('Failed to save push token:', err);
+        });
+      }
+    });
+  }, [user]);
 
   if (isLoading) {
     return <SplashScreen />;

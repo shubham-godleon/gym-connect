@@ -8,15 +8,24 @@
       "**/*"
     ],
     "ios": {
-      "supportsTabletMode": true,
+      "supportsTablet": true,
       "bundleIdentifier": "com.gymconnect.app"
     },
     "android": {
-      "package": "com.gymconnect.app"
+      "package": "com.gymconnect.app",
+      "googleServicesFile": "./google-services.json"
     },
     "plugins": [
       "expo-notifications",
-      "@react-native-google-signin/google-signin"
-    ]
+      "@react-native-google-signin/google-signin",
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "af3ccf84-3069-4d1e-8b40-b072f07eac42"
+      }
+    },
+    "owner": "shubhamgodleon"
   }
 }

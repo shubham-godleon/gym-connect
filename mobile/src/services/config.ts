@@ -15,6 +15,7 @@ export const firebaseConfig = {
   storageBucket: getEnv('EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET'),
   messagingSenderId: getEnv('EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'),
   appId: getEnv('EXPO_PUBLIC_FIREBASE_APP_ID'),
+  vapidKey: getEnv('EXPO_PUBLIC_FIREBASE_VAPID_KEY'),
 };
 
 // Supabase configuration

@@ -39,6 +39,7 @@ build/
 target/
 *.class
 *.jar
+!**/gradle/wrapper/gradle-wrapper.jar
 *.war
 
 # Spring Boot
@@ -50,8 +51,14 @@ backend/src/main/resources/application-dev.yml
 # Firebase credentials (sensitive - never commit)
 firebase-service-account.json
 *-service-account.json
+# google-services.json/GoogleService-Info.plist are client-side config (not
+# true secrets — security boundary is the API key's package/SHA-1
+# restriction, not file secrecy) and EAS Build needs them in the repo to
+# build the native app, so they're explicitly un-ignored below.
 google-services.json
+!**/google-services.json
 GoogleService-Info.plist
+!**/GoogleService-Info.plist
 
 # OS
 Thumbs.db
