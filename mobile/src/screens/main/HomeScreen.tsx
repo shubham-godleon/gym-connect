@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator,
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { createCheckin } from '@/store/slices/checkinSlice';
 import { signOut } from '@/store/slices/authSlice';
+import { colors, spacing, radius, typography, shadow } from '@/utils/theme';
 
 const HomeScreen = () => {
   const dispatch = useAppDispatch();
@@ -22,39 +23,52 @@ const HomeScreen = () => {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.greeting}>Hey {user?.displayName} 👋</Text>
+      <Text style={styles.tagline}>Ready to keep the streak alive?</Text>
 
       <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{user?.streakCount ?? 0}</Text>
-          <Text style={styles.statLabel}>Current Streak</Text>
+        <View style={[styles.statCard, styles.statCardPrimary]}>
+          <Text style={styles.statEmoji}>🔥</Text>
+          <Text style={styles.statValuePrimary}>{user?.streakCount ?? 0}</Text>
+          <Text style={styles.statLabelPrimary}>Current Streak</Text>
         </View>
         <View style={styles.statCard}>
+          <Text style={styles.statEmoji}>🏆</Text>
           <Text style={styles.statValue}>{user?.longestStreak ?? 0}</Text>
           <Text style={styles.statLabel}>Longest Streak</Text>
         </View>
       </View>
 
-      <Text style={styles.sectionTitle}>Check In</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Gym name"
-        value={gymName}
-        onChangeText={setGymName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Add a note (optional)"
-        value={note}
-        onChangeText={setNote}
-      />
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Check In</Text>
+        <Text style={styles.label}>Gym</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Where are you training today?"
+          placeholderTextColor={colors.textMuted}
+          value={gymName}
+          onChangeText={setGymName}
+        />
+        <Text style={styles.label}>Note (optional)</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Leg day. Feeling strong."
+          placeholderTextColor={colors.textMuted}
+          value={note}
+          onChangeText={setNote}
+        />
 
-      <TouchableOpacity style={styles.button} onPress={handleCheckin} disabled={isLoading}>
-        {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Check In</Text>}
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={handleCheckin} disabled={isLoading} activeOpacity={0.85}>
+          {isLoading ? <ActivityIndicator color={colors.white} /> : <Text style={styles.buttonText}>Check In</Text>}
+        </TouchableOpacity>
 
-      {submitted && <Text style={styles.success}>Checked in! 💪</Text>}
+        {submitted && (
+          <View style={styles.successBox}>
+            <Text style={styles.success}>Checked in! 💪 Keep it up.</Text>
+          </View>
+        )}
+      </View>
 
-      <TouchableOpacity style={styles.signOutButton} onPress={() => dispatch(signOut())}>
+      <TouchableOpacity style={styles.signOutButton} onPress={() => dispatch(signOut())} activeOpacity={0.7}>
         <Text style={styles.signOutText}>Sign Out</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -62,38 +76,62 @@ const HomeScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: 16 },
-  greeting: { fontSize: 24, fontWeight: 'bold', marginBottom: 16 },
-  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
+  container: { flex: 1, backgroundColor: colors.background },
+  content: { padding: spacing.lg },
+  greeting: { ...typography.h1, fontSize: 26, marginBottom: spacing.xs },
+  tagline: { ...typography.body, color: colors.textSecondary, marginBottom: spacing.lg },
+  statsRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.lg },
   statCard: {
     flex: 1,
-    backgroundColor: '#F2F5FA',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
     alignItems: 'center',
+    ...shadow.card,
   },
-  statValue: { fontSize: 28, fontWeight: 'bold', color: '#4A90E2' },
-  statLabel: { fontSize: 13, color: '#666', marginTop: 4 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', marginBottom: 12 },
+  statCardPrimary: {
+    backgroundColor: colors.primaryLight,
+  },
+  statEmoji: { fontSize: 22, marginBottom: spacing.xs },
+  statValue: { fontSize: 26, fontWeight: '800', color: colors.text },
+  statValuePrimary: { fontSize: 26, fontWeight: '800', color: colors.primary },
+  statLabel: { ...typography.caption, marginTop: spacing.xs },
+  statLabelPrimary: { ...typography.caption, color: colors.primaryDark, marginTop: spacing.xs, fontWeight: '600' },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    ...shadow.card,
+  },
+  sectionTitle: { ...typography.h3, marginBottom: spacing.md },
+  label: { ...typography.label, marginBottom: spacing.xs },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    padding: 14,
+    marginBottom: spacing.md,
     fontSize: 16,
+    backgroundColor: colors.background,
+    color: colors.text,
   },
   button: {
-    backgroundColor: '#4A90E2',
-    borderRadius: 8,
-    padding: 14,
+    backgroundColor: colors.primary,
+    borderRadius: radius.sm,
+    padding: 16,
     alignItems: 'center',
+    ...shadow.button,
   },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  success: { color: '#2E7D32', textAlign: 'center', marginTop: 12, fontSize: 14 },
-  signOutButton: { marginTop: 32, alignItems: 'center' },
-  signOutText: { color: '#D0021B', fontSize: 14 },
+  buttonText: { color: colors.white, fontSize: 16, fontWeight: '700' },
+  successBox: {
+    backgroundColor: colors.successBg,
+    borderRadius: radius.sm,
+    padding: spacing.sm,
+    marginTop: spacing.md,
+  },
+  success: { color: colors.success, textAlign: 'center', fontSize: 14, fontWeight: '600' },
+  signOutButton: { marginTop: spacing.xl, alignItems: 'center' },
+  signOutText: { color: colors.danger, fontSize: 14, fontWeight: '600' },
 });
 
 export default HomeScreen;

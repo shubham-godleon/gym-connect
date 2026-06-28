@@ -1,9 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '@/navigation/types';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { signUp, clearError } from '@/store/slices/authSlice';
+import { colors, spacing, radius, typography, shadow } from '@/utils/theme';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'SignUp'>;
 
@@ -20,68 +31,115 @@ const SignUpScreen = ({ navigation }: Props) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
-      <Text style={styles.subtitle}>Join Gym Connect</Text>
+    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <View style={styles.logoCircle}>
+          <Text style={styles.logoEmoji}>💪</Text>
+        </View>
+        <Text style={styles.title}>Create Account</Text>
+        <Text style={styles.subtitle}>Join friends. Build streaks. Show up.</Text>
 
-      {error && <Text style={styles.error}>{error}</Text>}
+        {error && (
+          <View style={styles.errorBox}>
+            <Text style={styles.error}>{error}</Text>
+          </View>
+        )}
 
-      <TextInput
-        style={styles.input}
-        placeholder="Display Name"
-        value={displayName}
-        onChangeText={setDisplayName}
-        autoCapitalize="words"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+        <View style={styles.card}>
+          <Text style={styles.label}>Display Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Alex Johnson"
+            placeholderTextColor={colors.textMuted}
+            value={displayName}
+            onChangeText={setDisplayName}
+            autoCapitalize="words"
+          />
+          <Text style={styles.label}>Email</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="you@example.com"
+            placeholderTextColor={colors.textMuted}
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+          <Text style={styles.label}>Password</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="••••••••"
+            placeholderTextColor={colors.textMuted}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
 
-      <TouchableOpacity style={styles.button} onPress={handleSignUp} disabled={isLoading}>
-        {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign Up</Text>}
-      </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={handleSignUp} disabled={isLoading} activeOpacity={0.85}>
+            {isLoading ? <ActivityIndicator color={colors.white} /> : <Text style={styles.buttonText}>Sign Up</Text>}
+          </TouchableOpacity>
+        </View>
 
-      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-        <Text style={styles.link}>Already have an account? Log in</Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+          <Text style={styles.link}>
+            Already have an account? <Text style={styles.linkBold}>Log in</Text>
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#fff' },
-  title: { fontSize: 32, fontWeight: 'bold', textAlign: 'center', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: '#666', textAlign: 'center', marginBottom: 24 },
+  flex: { flex: 1, backgroundColor: colors.background },
+  container: { flexGrow: 1, justifyContent: 'center', padding: spacing.lg },
+  logoCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: radius.full,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginBottom: spacing.md,
+  },
+  logoEmoji: { fontSize: 30 },
+  title: { ...typography.h1, textAlign: 'center', marginBottom: spacing.xs },
+  subtitle: { ...typography.body, color: colors.textSecondary, textAlign: 'center', marginBottom: spacing.lg },
+  errorBox: {
+    backgroundColor: colors.dangerBg,
+    borderRadius: radius.sm,
+    padding: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  error: { color: colors.danger, textAlign: 'center', fontSize: 13, fontWeight: '600' },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    ...shadow.card,
+  },
+  label: { ...typography.label, marginBottom: spacing.xs, marginTop: spacing.sm },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    padding: 14,
     fontSize: 16,
+    backgroundColor: colors.background,
+    color: colors.text,
   },
   button: {
-    backgroundColor: '#4A90E2',
-    borderRadius: 8,
-    padding: 14,
+    backgroundColor: colors.primary,
+    borderRadius: radius.sm,
+    padding: 16,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: spacing.lg,
+    ...shadow.button,
   },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  link: { color: '#4A90E2', textAlign: 'center', marginTop: 16 },
-  error: { color: '#D0021B', textAlign: 'center', marginBottom: 12 },
+  buttonText: { color: colors.white, fontSize: 16, fontWeight: '700' },
+  link: { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.lg, fontSize: 14 },
+  linkBold: { color: colors.primary, fontWeight: '700' },
 });
 
 export default SignUpScreen;

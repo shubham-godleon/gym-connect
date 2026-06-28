@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react';
+import { Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { restoreToken } from '@/store/slices/authSlice';
+import { colors } from '@/utils/theme';
 
 import LoginScreen from '@/screens/auth/LoginScreen';
 import SignUpScreen from '@/screens/auth/SignUpScreen';
@@ -19,6 +21,16 @@ import { RootStackParamList, AuthStackParamList, MainTabParamList } from './type
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
+
+const TabIcon = ({ emoji, focused }: { emoji: string; focused: boolean }) => (
+  <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.5 }}>{emoji}</Text>
+);
+
+const headerOptions = {
+  headerStyle: { backgroundColor: colors.surface },
+  headerTitleStyle: { color: colors.text, fontWeight: '700' as const },
+  headerShadowVisible: false,
+};
 
 function AuthNavigator() {
   return (
@@ -38,6 +50,11 @@ function MainTabNavigator() {
     <MainTab.Navigator
       screenOptions={{
         headerShown: true,
+        ...headerOptions,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}
     >
       <MainTab.Screen
@@ -46,7 +63,7 @@ function MainTabNavigator() {
         options={{
           title: 'Home',
           tabBarLabel: 'Home',
-          tabBarIcon: () => null,
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} />,
         }}
       />
       <MainTab.Screen
@@ -55,7 +72,7 @@ function MainTabNavigator() {
         options={{
           title: 'Friends',
           tabBarLabel: 'Friends',
-          tabBarIcon: () => null,
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🤝" focused={focused} />,
         }}
       />
       <MainTab.Screen
@@ -64,7 +81,7 @@ function MainTabNavigator() {
         options={{
           title: 'Feed',
           tabBarLabel: 'Feed',
-          tabBarIcon: () => null,
+          tabBarIcon: ({ focused }) => <TabIcon emoji="📣" focused={focused} />,
         }}
       />
       <MainTab.Screen
@@ -73,7 +90,7 @@ function MainTabNavigator() {
         options={{
           title: 'Rankings',
           tabBarLabel: 'Rankings',
-          tabBarIcon: () => null,
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🏆" focused={focused} />,
         }}
       />
     </MainTab.Navigator>
@@ -110,6 +127,7 @@ function RootNavigator() {
             options={{
               title: 'Profile',
               headerShown: true,
+              ...headerOptions,
             }}
           />
         </>

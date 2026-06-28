@@ -1,10 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { User, Friendship } from '@/types';
+import { User, FriendRequest } from '@/types';
 import apiService from '@/services/apiService';
 
 export interface FriendState {
   friends: User[];
-  pendingRequests: Friendship[];
+  pendingRequests: FriendRequest[];
   isLoading: boolean;
   error: string | null;
 }

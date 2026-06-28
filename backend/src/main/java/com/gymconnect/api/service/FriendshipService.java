@@ -1,5 +1,6 @@
 package com.gymconnect.api.service;
 
+import com.gymconnect.api.dto.FriendRequestDTO;
 import com.gymconnect.api.dto.UserDTO;
 import com.gymconnect.api.entity.Friendship;
 import com.gymconnect.api.entity.Friendship.FriendshipStatus;
@@ -69,8 +70,24 @@ public class FriendshipService {
                 .collect(Collectors.toList());
     }
 
-    public List<Friendship> getPendingRequests(UUID userId) {
-        return friendshipRepository.findPendingRequestsFor(userId);
+    public List<FriendRequestDTO> getPendingRequests(UUID userId) {
+        return friendshipRepository.findPendingRequestsFor(userId)
+                .stream()
+                .map(this::toRequestDTO)
+                .collect(Collectors.toList());
+    }
+
+    private FriendRequestDTO toRequestDTO(Friendship friendship) {
+        FriendRequestDTO dto = new FriendRequestDTO();
+        dto.setId(friendship.getId());
+        dto.setRequesterId(friendship.getRequesterId());
+        dto.setAddresseeId(friendship.getAddresseeId());
+        dto.setCreatedAt(friendship.getCreatedAt());
+        userRepository.findById(friendship.getRequesterId()).ifPresent(requester -> {
+            dto.setRequesterDisplayName(requester.getDisplayName());
+            dto.setRequesterPhotoUrl(requester.getPhotoUrl());
+        });
+        return dto;
     }
 
     @Transactional

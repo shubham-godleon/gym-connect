@@ -41,6 +41,16 @@ export interface Friendship {
   createdAt: string;
 }
 
+// Pending friend request, enriched with requester display info (matches backend FriendRequestDTO)
+export interface FriendRequest {
+  id: string;
+  requesterId: string;
+  requesterDisplayName: string;
+  requesterPhotoUrl?: string;
+  addresseeId: string;
+  createdAt: string;
+}
+
 // Auth types
 export interface AuthState {
   user: User | null;

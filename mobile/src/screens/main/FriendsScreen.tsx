@@ -10,6 +10,8 @@ import {
 } from '@/store/slices/friendSlice';
 import apiService from '@/services/apiService';
 import { User } from '@/types';
+import { colors, spacing, radius, typography, shadow } from '@/utils/theme';
+import { initials } from '@/utils/format';
 
 const FriendsScreen = () => {
   const dispatch = useAppDispatch();
@@ -53,9 +55,18 @@ const FriendsScreen = () => {
   };
 
   const renderFriend = ({ item }: { item: User }) => (
-    <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('ProfileDetail', { userId: item.id })}>
+    <TouchableOpacity
+      style={styles.row}
+      onPress={() => navigation.navigate('ProfileDetail', { userId: item.id })}
+      activeOpacity={0.7}
+    >
+      <View style={styles.avatar}>
+        <Text style={styles.avatarText}>{initials(item.displayName)}</Text>
+      </View>
       <Text style={styles.name}>{item.displayName}</Text>
-      <Text style={styles.streak}>🔥 {item.streakCount}</Text>
+      <View style={styles.streakPill}>
+        <Text style={styles.streak}>🔥 {item.streakCount}</Text>
+      </View>
     </TouchableOpacity>
   );
 
@@ -67,35 +78,44 @@ const FriendsScreen = () => {
       renderItem={renderFriend}
       refreshing={isLoading}
       onRefresh={load}
+      contentContainerStyle={styles.listContent}
       ListHeaderComponent={
         <View>
-          <View style={styles.section}>
+          <View style={styles.card}>
             <Text style={styles.sectionTitle}>Add a Friend</Text>
             <TextInput
               style={styles.input}
               placeholder="Friend's email"
+              placeholderTextColor={colors.textMuted}
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
               keyboardType="email-address"
             />
-            <TouchableOpacity style={styles.button} onPress={handleAddFriend} disabled={addLoading}>
-              {addLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Send Request</Text>}
+            <TouchableOpacity style={styles.button} onPress={handleAddFriend} disabled={addLoading} activeOpacity={0.85}>
+              {addLoading ? (
+                <ActivityIndicator color={colors.white} />
+              ) : (
+                <Text style={styles.buttonText}>Send Request</Text>
+              )}
             </TouchableOpacity>
             {addStatus && <Text style={styles.status}>{addStatus}</Text>}
           </View>
 
           {pendingRequests.length > 0 && (
-            <View style={styles.section}>
+            <View style={styles.card}>
               <Text style={styles.sectionTitle}>Pending Requests</Text>
               {pendingRequests.map((req) => (
                 <View key={req.id} style={styles.requestRow}>
-                  <Text style={styles.name}>Request from {req.requesterId}</Text>
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>{initials(req.requesterDisplayName)}</Text>
+                  </View>
+                  <Text style={styles.requestName}>{req.requesterDisplayName}</Text>
                   <View style={styles.requestActions}>
-                    <TouchableOpacity onPress={() => handleRespond(req.id, true)}>
+                    <TouchableOpacity onPress={() => handleRespond(req.id, true)} activeOpacity={0.7}>
                       <Text style={styles.accept}>Accept</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleRespond(req.id, false)}>
+                    <TouchableOpacity onPress={() => handleRespond(req.id, false)} activeOpacity={0.7}>
                       <Text style={styles.decline}>Decline</Text>
                     </TouchableOpacity>
                   </View>
@@ -104,12 +124,13 @@ const FriendsScreen = () => {
             </View>
           )}
 
-          <Text style={styles.sectionTitle}>Friends</Text>
+          <Text style={styles.listTitle}>Friends</Text>
         </View>
       }
       ListEmptyComponent={
         <View style={styles.empty}>
-          <Text>No friends yet. Add one above!</Text>
+          <Text style={styles.emptyEmoji}>🤝</Text>
+          <Text style={styles.emptyText}>No friends yet. Add one above!</Text>
         </View>
       }
     />
@@ -117,46 +138,74 @@ const FriendsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  section: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  sectionTitle: { fontSize: 16, fontWeight: '600', marginBottom: 8, paddingHorizontal: 16, marginTop: 8 },
+  container: { flex: 1, backgroundColor: colors.background },
+  listContent: { padding: spacing.md },
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    ...shadow.card,
+  },
+  sectionTitle: { ...typography.h3, marginBottom: spacing.md },
+  listTitle: { ...typography.h3, marginBottom: spacing.sm, marginLeft: spacing.xs },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    padding: 14,
+    marginBottom: spacing.sm,
     fontSize: 16,
+    backgroundColor: colors.background,
+    color: colors.text,
   },
   button: {
-    backgroundColor: '#4A90E2',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: colors.primary,
+    borderRadius: radius.sm,
+    padding: 14,
     alignItems: 'center',
   },
-  buttonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  status: { marginTop: 8, color: '#666', fontSize: 13 },
+  buttonText: { color: colors.white, fontSize: 15, fontWeight: '700' },
+  status: { marginTop: spacing.sm, color: colors.textSecondary, fontSize: 13 },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    ...shadow.card,
   },
-  name: { fontSize: 16, fontWeight: '500' },
-  streak: { fontSize: 14, color: '#666' },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.full,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.sm,
+  },
+  avatarText: { color: colors.primaryDark, fontWeight: '700', fontSize: 14 },
+  name: { ...typography.bodyBold, flex: 1 },
+  streakPill: {
+    backgroundColor: colors.background,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  streak: { fontSize: 13, color: colors.textSecondary, fontWeight: '600' },
   requestRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
   },
-  requestActions: { flexDirection: 'row', gap: 16 },
-  accept: { color: '#2E7D32', fontWeight: '600' },
-  decline: { color: '#D0021B', fontWeight: '600' },
-  empty: { alignItems: 'center', padding: 32 },
+  requestName: { ...typography.bodyBold, flex: 1 },
+  requestActions: { flexDirection: 'row', gap: spacing.md },
+  accept: { color: colors.success, fontWeight: '700', fontSize: 13 },
+  decline: { color: colors.danger, fontWeight: '700', fontSize: 13 },
+  empty: { alignItems: 'center', padding: spacing.xxl },
+  emptyEmoji: { fontSize: 40, marginBottom: spacing.sm },
+  emptyText: { ...typography.caption },
 });
 
 export default FriendsScreen;

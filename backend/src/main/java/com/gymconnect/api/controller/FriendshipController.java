@@ -1,7 +1,7 @@
 package com.gymconnect.api.controller;
 
+import com.gymconnect.api.dto.FriendRequestDTO;
 import com.gymconnect.api.dto.UserDTO;
-import com.gymconnect.api.entity.Friendship;
 import com.gymconnect.api.service.FriendshipService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -44,7 +44,7 @@ public class FriendshipController {
     }
 
     @GetMapping("/{userId}/pending")
-    public ResponseEntity<List<Friendship>> getPendingRequests(@PathVariable UUID userId) {
+    public ResponseEntity<List<FriendRequestDTO>> getPendingRequests(@PathVariable UUID userId) {
         return ResponseEntity.ok(friendshipService.getPendingRequests(userId));
     }
 

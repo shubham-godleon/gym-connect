@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
+import { Platform } from 'react-native';
+import * as Linking from 'expo-linking';
 import { supabaseConfig } from './config';
 
 const supabase = createClient(
@@ -30,6 +32,16 @@ export const supabaseService = {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  signInWithGoogle: async () => {
+    const redirectTo = Platform.OS === 'web' ? window.location.origin : Linking.createURL('/');
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo },
     });
     if (error) throw error;
     return data;

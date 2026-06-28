@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { apiConfig } from './config';
-import { User, Checkin, LeaderboardEntry, Friendship } from '@/types';
+import { User, Checkin, LeaderboardEntry, FriendRequest } from '@/types';
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: apiConfig.baseURL,
@@ -69,7 +69,7 @@ export const apiService = {
     return response.data;
   },
 
-  getPendingRequests: async (userId: string): Promise<Friendship[]> => {
+  getPendingRequests: async (userId: string): Promise<FriendRequest[]> => {
     const response = await apiClient.get(`/friends/${userId}/pending`);
     return response.data;
   },

@@ -44,6 +44,20 @@ export const signIn = createAsyncThunk(
   }
 );
 
+export const signInWithGoogle = createAsyncThunk(
+  'auth/signInWithGoogle',
+  async (_, { rejectWithValue }) => {
+    try {
+      // Redirects the browser to Google; once Supabase sets the session on
+      // the way back, restoreToken (run on app mount) picks up the user.
+      await supabaseService.signInWithGoogle();
+      return null;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 export const signOut = createAsyncThunk(
   'auth/signOut',
   async (_, { rejectWithValue }) => {
@@ -114,6 +128,14 @@ const authSlice = createSlice({
         state.token = action.payload.token;
       })
       .addCase(signIn.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(signInWithGoogle.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(signInWithGoogle.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })
