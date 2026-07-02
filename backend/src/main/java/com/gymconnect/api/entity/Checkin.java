@@ -20,6 +20,14 @@ public class Checkin {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
+    // Set when the check-in was made at a registered gym (null for HOME/legacy).
+    @Column(name = "gym_id")
+    private UUID gymId;
+
+    // True only when a gym check-in passed the geofence (physically present).
+    @Column(nullable = false)
+    private boolean verified = false;
+
     private String gymName;
 
     private String note;

@@ -25,6 +25,10 @@ public class User {
     @Column(nullable = false)
     private String displayName;
 
+    // Unique handle-style identity (lowercase). Auto-generated if missing; the
+    // single name shown everywhere. Case-insensitive-unique via a DB index.
+    private String username;
+
     private String photoUrl;
 
     private String homeGymName;

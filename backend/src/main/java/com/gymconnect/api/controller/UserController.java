@@ -2,6 +2,7 @@ package com.gymconnect.api.controller;
 
 import com.gymconnect.api.dto.SlackerDTO;
 import com.gymconnect.api.dto.UserDTO;
+import com.gymconnect.api.dto.UserSearchResultDTO;
 import com.gymconnect.api.security.AuthContext;
 import com.gymconnect.api.service.UserService;
 import com.gymconnect.api.service.WeeklyGoalService;
@@ -30,6 +31,13 @@ public class UserController {
     @GetMapping("/by-email/{email}")
     public ResponseEntity<UserDTO> getUserByEmail(@PathVariable String email) {
         return ResponseEntity.ok(userService.getUserByEmail(email));
+    }
+
+    // Friend-add username search (prefix match, capped).
+    @GetMapping("/search")
+    public ResponseEntity<List<UserSearchResultDTO>> search(@RequestParam String q) {
+        authContext.currentUserId(); // require auth
+        return ResponseEntity.ok(userService.searchByUsername(q));
     }
 
     @PostMapping

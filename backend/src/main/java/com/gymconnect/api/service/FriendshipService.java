@@ -7,6 +7,7 @@ import com.gymconnect.api.entity.Friendship.FriendshipStatus;
 import com.gymconnect.api.entity.User;
 import com.gymconnect.api.repository.FriendshipRepository;
 import com.gymconnect.api.repository.UserRepository;
+import com.gymconnect.api.util.Names;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,7 +86,7 @@ public class FriendshipService {
         dto.setAddresseeId(friendship.getAddresseeId());
         dto.setCreatedAt(friendship.getCreatedAt());
         userRepository.findById(friendship.getRequesterId()).ifPresent(requester -> {
-            dto.setRequesterDisplayName(requester.getDisplayName());
+            dto.setRequesterDisplayName(Names.shown(requester));
             dto.setRequesterPhotoUrl(requester.getPhotoUrl());
         });
         return dto;
@@ -101,7 +102,8 @@ public class FriendshipService {
         UserDTO dto = new UserDTO();
         dto.setId(user.getId());
         dto.setEmail(user.getEmail());
-        dto.setDisplayName(user.getDisplayName());
+        dto.setDisplayName(Names.shown(user));
+        dto.setUsername(user.getUsername());
         dto.setPhotoUrl(user.getPhotoUrl());
         dto.setHomeGymName(user.getHomeGymName());
         dto.setStreakCount(user.getStreakCount() != null ? user.getStreakCount() : 0);

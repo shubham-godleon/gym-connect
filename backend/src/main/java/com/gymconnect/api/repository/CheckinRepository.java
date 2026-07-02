@@ -23,4 +23,11 @@ public interface CheckinRepository extends JpaRepository<Checkin, UUID> {
     long countByUserIdAndCreatedAtBetween(UUID userId, LocalDateTime start, LocalDateTime end);
 
     List<Checkin> findByUserIdAndCreatedAtBetween(UUID userId, LocalDateTime start, LocalDateTime end);
+
+    // Verified check-ins at a gym since a cutoff — used for "who's here now".
+    List<Checkin> findByGymIdAndVerifiedTrueAndCreatedAtAfter(UUID gymId, LocalDateTime after);
+
+    // Per-user check-in counts at one gym since week start — the gym leaderboard.
+    @Query("SELECT c.userId, COUNT(c) FROM Checkin c WHERE c.gymId = :gymId AND c.createdAt >= :weekStart GROUP BY c.userId")
+    List<Object[]> countCheckinsThisWeekAtGym(@Param("gymId") UUID gymId, @Param("weekStart") LocalDateTime weekStart);
 }

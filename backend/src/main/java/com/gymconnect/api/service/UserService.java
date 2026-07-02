@@ -1,6 +1,7 @@
 package com.gymconnect.api.service;
 
 import com.gymconnect.api.dto.UserDTO;
+import com.gymconnect.api.dto.UserSearchResultDTO;
 import com.gymconnect.api.entity.User;
 import com.gymconnect.api.entity.User.WorkoutLocation;
 import com.gymconnect.api.repository.UserRepository;
@@ -8,7 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -16,6 +20,8 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final WeeklyGoalService weeklyGoalService;
+
+    private static final Pattern USERNAME_RE = Pattern.compile("^[a-z0-9_]{3,20}$");
 
     public UserDTO getUserById(UUID id) {
         return userRepository.findById(id)
@@ -48,6 +54,18 @@ public class UserService {
         if (dto.getWorkoutLocation() != null) user.setWorkoutLocation(WorkoutLocation.valueOf(dto.getWorkoutLocation()));
         user.setPreferredWorkoutTime(dto.getPreferredWorkoutTime());
 
+        if (dto.getUsername() != null) {
+            String uname = dto.getUsername().trim().toLowerCase();
+            if (!USERNAME_RE.matcher(uname).matches()) {
+                throw new IllegalArgumentException("Username must be 3–20 chars: lowercase letters, numbers, or underscore");
+            }
+            boolean changing = !uname.equalsIgnoreCase(user.getUsername() == null ? "" : user.getUsername());
+            if (changing && userRepository.existsByUsernameIgnoreCase(uname)) {
+                throw new IllegalArgumentException("That username is already taken");
+            }
+            user.setUsername(uname);
+        }
+
         if (dto.getWeeklyGoal() != null) {
             int goal = dto.getWeeklyGoal();
             if (goal < 1 || goal > 7) {
@@ -71,14 +89,52 @@ public class UserService {
         });
     }
 
+    public List<UserSearchResultDTO> searchByUsername(String q) {
+        if (q == null || q.trim().isEmpty()) return List.of();
+        String prefix = q.trim().toLowerCase();
+        return userRepository.findTop20ByUsernameStartingWithIgnoreCaseOrderByUsernameAsc(prefix).stream()
+                .map(u -> new UserSearchResultDTO(u.getId(), u.getUsername(), u.getDisplayName(), u.getPhotoUrl()))
+                .collect(Collectors.toList());
+    }
+
+    // Mints a unique handle from the display name (falling back to the email local part)
+    // the first time it's needed. Gate-free — no forced screen, no backfill migration.
+    private void ensureUsername(User user) {
+        if (user.getUsername() != null && !user.getUsername().isBlank()) return;
+
+        String base = slugify(user.getDisplayName());
+        if (base.length() < 3 && user.getEmail() != null) base = slugify(user.getEmail().split("@")[0]);
+        if (base.length() < 3) base = "user";
+        if (base.length() > 20) base = base.substring(0, 20);
+
+        String candidate = base;
+        int n = 1;
+        while (userRepository.existsByUsernameIgnoreCase(candidate)) {
+            n++;
+            String suffix = String.valueOf(n);
+            String trimmed = base.substring(0, Math.min(base.length(), 20 - suffix.length()));
+            candidate = trimmed + suffix;
+        }
+        user.setUsername(candidate);
+        userRepository.save(user);
+    }
+
+    private static String slugify(String s) {
+        return s == null ? "" : s.toLowerCase().replaceAll("[^a-z0-9_]", "");
+    }
+
     private UserDTO toDTO(User user) {
         // Catch this user's weekly streak up to date before reading it out.
         weeklyGoalService.resolvePastWeeks(user);
+        // Mint a username on first read if they don't have one yet.
+        ensureUsername(user);
 
         UserDTO dto = new UserDTO();
         dto.setId(user.getId());
         dto.setEmail(user.getEmail());
+        // Profile keeps the real display name; @username is a separate field.
         dto.setDisplayName(user.getDisplayName());
+        dto.setUsername(user.getUsername());
         dto.setPhotoUrl(user.getPhotoUrl());
         dto.setHomeGymName(user.getHomeGymName());
         dto.setWorkoutLocation(user.getWorkoutLocation() != null ? user.getWorkoutLocation().name() : WorkoutLocation.GYM.name());

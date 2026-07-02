@@ -12,6 +12,7 @@ import com.gymconnect.api.repository.CheckinRepository;
 import com.gymconnect.api.repository.FriendshipRepository;
 import com.gymconnect.api.repository.ReactionRepository;
 import com.gymconnect.api.repository.UserRepository;
+import com.gymconnect.api.util.Names;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -67,6 +68,42 @@ public class CheckinService {
         nudgeSchedulerService.recomputePattern(userId);
 
         return toDTO(checkin, user, 0, false);
+    }
+
+    // Check-in at a registered gym. Reuses the daily cap + friend notifications;
+    // `verified` reflects whether the caller passed the gym's geofence.
+    @Transactional
+    public CheckinDTO checkinAtGym(UUID userId, UUID gymId, String gymName, boolean verified) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        long todayCount = checkinRepository.countByUserIdAndCreatedAtBetween(userId, startOfDay, startOfDay.plusDays(1));
+        if (todayCount >= MAX_CHECKINS_PER_DAY) {
+            throw new IllegalStateException("You've already checked in " + MAX_CHECKINS_PER_DAY + " times today");
+        }
+
+        Checkin checkin = new Checkin();
+        checkin.setUserId(userId);
+        checkin.setLocation(CheckinLocation.GYM);
+        checkin.setGymId(gymId);
+        checkin.setGymName(gymName);
+        checkin.setVerified(verified);
+        checkinRepository.save(checkin);
+
+        notifyFriends(user, checkin);
+        nudgeSchedulerService.recomputePattern(userId);
+
+        return toDTO(checkin, user, 0, false);
+    }
+
+    // Offset-paginated slice of the feed (for the Home feed's infinite scroll).
+    public List<FeedItemDTO> getFriendsFeed(UUID userId, int page, int size) {
+        List<FeedItemDTO> all = getFriendsFeed(userId);
+        int from = Math.max(0, page) * Math.max(1, size);
+        if (from >= all.size()) return List.of();
+        int to = Math.min(all.size(), from + Math.max(1, size));
+        return all.subList(from, to);
     }
 
     public List<FeedItemDTO> getFriendsFeed(UUID userId) {
@@ -141,7 +178,7 @@ public class CheckinService {
         List<LeaderboardEntryDTO> board = new ArrayList<>();
         for (User u : friends) {
             int count = countMap.getOrDefault(u.getId(), 0L).intValue();
-            board.add(new LeaderboardEntryDTO(u.getId(), u.getDisplayName(), u.getPhotoUrl(), count, u.getStreakCount()));
+            board.add(new LeaderboardEntryDTO(u.getId(), Names.shown(u), u.getPhotoUrl(), count, u.getStreakCount()));
         }
         board.sort(Comparator.comparingInt(LeaderboardEntryDTO::getCheckinsThisWeek).reversed());
         return board;
@@ -169,11 +206,12 @@ public class CheckinService {
         CheckinDTO dto = new CheckinDTO();
         dto.setId(c.getId());
         dto.setUserId(c.getUserId());
-        dto.setDisplayName(user.getDisplayName());
+        dto.setDisplayName(Names.shown(user));
         dto.setPhotoUrl(user.getPhotoUrl());
         dto.setGymName(c.getGymName());
         dto.setNote(c.getNote());
         dto.setLocation(c.getLocation() != null ? c.getLocation().name() : CheckinLocation.GYM.name());
+        dto.setVerified(c.isVerified());
         dto.setReactionCount(reactionCount);
         dto.setReactedByMe(reactedByMe);
         dto.setCreatedAt(c.getCreatedAt());
@@ -185,11 +223,12 @@ public class CheckinService {
         dto.setType("CHECKIN");
         dto.setId(c.getId());
         dto.setUserId(c.getUserId());
-        dto.setDisplayName(user.getDisplayName());
+        dto.setDisplayName(Names.shown(user));
         dto.setPhotoUrl(user.getPhotoUrl());
         dto.setGymName(c.getGymName());
         dto.setNote(c.getNote());
         dto.setLocation(c.getLocation() != null ? c.getLocation().name() : CheckinLocation.GYM.name());
+        dto.setVerified(c.isVerified());
         dto.setReactionCount(reactionCount);
         dto.setReactedByMe(reactedByMe);
         dto.setCreatedAt(c.getCreatedAt());
@@ -201,7 +240,7 @@ public class CheckinService {
         dto.setType("FRIEND_ACCEPTED");
         dto.setId(f.getId());
         dto.setUserId(f.getAddresseeId());
-        dto.setFriendDisplayName(other != null ? other.getDisplayName() : "Someone");
+        dto.setFriendDisplayName(Names.shown(other));
         dto.setCreatedAt(f.getRespondedAt() != null ? f.getRespondedAt() : f.getCreatedAt());
         return dto;
     }

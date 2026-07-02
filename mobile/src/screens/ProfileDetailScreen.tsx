@@ -49,6 +49,7 @@ const ProfileDetailScreen = ({ route, navigation }: Props) => {
       <View style={styles.headerCard}>
         <Avatar displayName={profile.displayName} photoUrl={profile.photoUrl} size={72} />
         <Text style={styles.name}>{profile.displayName}</Text>
+        {profile.username && <Text style={styles.handle}>@{profile.username}</Text>}
         {profile.homeGymName && <Text style={styles.gym}>🏋️ {profile.homeGymName}</Text>}
         {isOwnProfile && (
           <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile')}>
@@ -95,6 +96,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shado
     ...shadow.card,
   },
   name: { ...typography.h2, marginTop: spacing.sm, marginBottom: spacing.xs },
+  handle: { ...typography.caption, color: colors.primary, fontWeight: '700', marginBottom: spacing.xs },
   gym: { ...typography.caption },
   editButton: { marginTop: spacing.sm },
   editButtonText: { color: colors.primary, fontWeight: '600', fontSize: 14 },

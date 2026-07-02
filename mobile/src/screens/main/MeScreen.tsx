@@ -19,6 +19,7 @@ const MeScreen = () => {
       <View style={styles.headerCard}>
         <Avatar displayName={user.displayName} photoUrl={user.photoUrl} size={72} />
         <Text style={styles.name}>{user.displayName}</Text>
+        {user.username && <Text style={styles.handle}>@{user.username}</Text>}
         {user.homeGymName && <Text style={styles.gym}>🏋️ {user.homeGymName}</Text>}
         <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile')}>
           <Text style={styles.editButtonText}>Edit Profile</Text>
@@ -63,6 +64,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shado
     ...shadow.card,
   },
   name: { ...typography.h2, marginTop: spacing.sm, marginBottom: spacing.xs },
+  handle: { ...typography.caption, color: colors.primary, fontWeight: '700', marginBottom: spacing.xs },
   gym: { ...typography.caption },
   editButton: { marginTop: spacing.sm },
   editButtonText: { color: colors.primary, fontWeight: '600', fontSize: 14 },

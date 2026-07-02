@@ -13,6 +13,7 @@ public class CheckinDTO {
     private String gymName;
     private String note;
     private String location;
+    private boolean verified;
     private int reactionCount;
     private boolean reactedByMe;
     private LocalDateTime createdAt;

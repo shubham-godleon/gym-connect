@@ -9,6 +9,7 @@ import com.gymconnect.api.repository.CheckinRepository;
 import com.gymconnect.api.repository.FriendshipRepository;
 import com.gymconnect.api.repository.UserRepository;
 import com.gymconnect.api.repository.WeeklyGoalResultRepository;
+import com.gymconnect.api.util.Names;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -110,7 +111,7 @@ public class WeeklyGoalService {
             if (progress < friend.getWeeklyGoal()) {
                 slackers.add(new SlackerDTO(
                         friend.getId(),
-                        friend.getDisplayName(),
+                        Names.shown(friend),
                         friend.getPhotoUrl(),
                         progress,
                         friend.getWeeklyGoal(),

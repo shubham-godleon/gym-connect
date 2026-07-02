@@ -21,10 +21,10 @@ const EditProfileScreen = () => {
   const { colors, mode, setMode } = useTheme();
   const styles = useThemedStyles(createStyles);
   const user = useAppSelector((state) => state.auth.user);
-  const [displayName, setDisplayName] = useState(user?.displayName || '');
+  const [username, setUsername] = useState(user?.username || '');
   const [password, setPassword] = useState('');
   const [fields, setFields] = useState<ProfileFieldsValue>({
-    displayName: user?.displayName || '',
+    displayName: user?.username || user?.displayName || '',
     photoUri: user?.photoUrl,
     workoutLocation: user?.workoutLocation ?? 'GYM',
     preferredWorkoutTime: user?.preferredWorkoutTime,
@@ -35,7 +35,6 @@ const EditProfileScreen = () => {
 
   const handleFieldsChange = (value: ProfileFieldsValue) => {
     setFields(value);
-    setDisplayName((d) => value.displayName || d);
   };
 
   const handleSave = async () => {
@@ -52,8 +51,9 @@ const EditProfileScreen = () => {
         photoUrl = await supabaseService.uploadAvatar(fields.photoBase64);
       }
 
+      const uname = username.trim().toLowerCase();
       await apiService.updateUserProfile(user.id, {
-        displayName,
+        username: uname, // display name stays distinct — profile shows both
         photoUrl,
         workoutLocation: fields.workoutLocation,
         preferredWorkoutTime: fields.preferredWorkoutTime,
@@ -74,10 +74,14 @@ const EditProfileScreen = () => {
         <Text style={styles.label}>Username</Text>
         <TextInput
           style={styles.input}
-          value={displayName}
-          onChangeText={setDisplayName}
+          value={username}
+          onChangeText={(t) => setUsername(t.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+          placeholder="username"
           placeholderTextColor={colors.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
         />
+        <Text style={styles.hint}>Lowercase letters, numbers, underscore — this is how friends find you.</Text>
 
         <Text style={styles.label}>New password (leave blank to keep current)</Text>
         <TextInput
@@ -89,7 +93,7 @@ const EditProfileScreen = () => {
           secureTextEntry
         />
 
-        <ProfileFields value={{ ...fields, displayName }} onChange={handleFieldsChange} />
+        <ProfileFields value={{ ...fields, displayName: username }} onChange={handleFieldsChange} />
 
         <Text style={styles.label}>Appearance</Text>
         <View style={styles.themeRow}>
@@ -140,6 +144,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shado
     ...shadow.card,
   },
   label: { ...typography.label, marginBottom: spacing.xs },
+  hint: { ...typography.caption, color: colors.textMuted, marginTop: -spacing.xs, marginBottom: spacing.md },
   input: {
     borderWidth: 1,
     borderColor: colors.border,

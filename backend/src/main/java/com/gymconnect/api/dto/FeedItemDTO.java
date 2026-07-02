@@ -14,6 +14,7 @@ public class FeedItemDTO {
     private String gymName;
     private String note;
     private String location;
+    private boolean verified;
     private int reactionCount;
     private boolean reactedByMe;
     private String friendDisplayName; // only set for FRIEND_ACCEPTED

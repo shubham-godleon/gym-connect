@@ -26,6 +26,18 @@
         {
           "photosPermission": "Gym Connect needs access to your photos to set a profile picture."
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Gym Connect uses your location to check you in at the gym and find gyms near you."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Gym Connect uses the camera to scan a gym's QR code to check in."
+        }
       ]
     ],
     "extra": {

@@ -6,6 +6,7 @@ export interface User {
   id: string;
   email: string;
   displayName: string;
+  username?: string;
   photoUrl?: string;
   homeGymName?: string;
   workoutLocation: WorkoutLocation;
@@ -36,6 +37,7 @@ export interface Checkin {
   gymName?: string;
   note?: string;
   location: CheckinLocation;
+  verified: boolean;
   reactionCount: number;
   reactedByMe: boolean;
   createdAt: string;
@@ -51,10 +53,45 @@ export interface FeedItem {
   gymName?: string;
   note?: string;
   location?: CheckinLocation;
+  verified: boolean;
   reactionCount: number;
   reactedByMe: boolean;
   friendDisplayName?: string;
   createdAt: string;
+}
+
+// Gym (matches backend GymDTO)
+export interface Gym {
+  id: string;
+  name: string;
+  address?: string;
+  lat: number;
+  lng: number;
+  radiusMeters: number;
+  source: 'MAPPLS' | 'MANUAL';
+  locationStatus: 'PROVISIONAL' | 'CONFIRMED';
+  qrToken: string;
+  memberCount: number;
+  hereNowCount: number;
+  member: boolean;
+  distanceMeters?: number;
+}
+
+// Gym roster entry (matches backend RosterEntryDTO)
+export interface RosterEntry {
+  userId: string;
+  displayName: string;
+  photoUrl?: string;
+  hereNow: boolean;
+  streakCount: number;
+}
+
+// Result of a QR check-in (matches backend GymCheckinResponse)
+export interface GymCheckinResult {
+  verified: boolean;
+  distanceMeters: number;
+  checkin?: Checkin;
+  message: string;
 }
 
 // Calendar day (matches backend CheckinDayDTO)
@@ -89,6 +126,14 @@ export interface FriendRequest {
   requesterPhotoUrl?: string;
   addresseeId: string;
   createdAt: string;
+}
+
+// Friend-add username search result (matches backend UserSearchResultDTO)
+export interface UserSearchResult {
+  userId: string;
+  username: string;
+  displayName: string;
+  photoUrl?: string;
 }
 
 // Auth types

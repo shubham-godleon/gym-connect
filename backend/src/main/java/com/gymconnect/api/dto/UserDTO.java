@@ -10,6 +10,7 @@ public class UserDTO {
     private UUID id;
     private String email;
     private String displayName;
+    private String username;
     private String photoUrl;
     private String homeGymName;
     private String workoutLocation;

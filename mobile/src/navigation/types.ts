@@ -5,9 +5,13 @@ export type RootStackParamList = {
   ProfileSetup: undefined;
   WeeklyGoalGate: undefined;
   Main: NavigatorScreenParams<MainTabParamList>;
+  Me: undefined;
   ProfileDetail: { userId: string };
   EditProfile: undefined;
   CheckinCalendar: { userId: string };
+  GymDetail: { gymId: string };
+  AddGym: undefined;
+  ScanGym: undefined;
 };
 
 export type AuthStackParamList = {
@@ -18,9 +22,7 @@ export type AuthStackParamList = {
 export type MainTabParamList = {
   Home: undefined;
   Friends: undefined;
-  Feed: undefined;
-  Rankings: undefined;
-  Me: undefined;
+  Gyms: undefined;
 };
 
 declare global {

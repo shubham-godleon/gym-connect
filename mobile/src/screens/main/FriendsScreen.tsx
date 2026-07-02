@@ -8,11 +8,14 @@ import {
   respondToFriendRequest,
   sendFriendRequest,
 } from '@/store/slices/friendSlice';
+import { fetchLeaderboard } from '@/store/slices/checkinSlice';
 import apiService from '@/services/apiService';
-import { User } from '@/types';
+import { User, UserSearchResult, LeaderboardEntry } from '@/types';
 import Avatar from '@/components/Avatar';
 import { spacing, radius, ThemeColors, Typography, Shadow } from '@/utils/theme';
 import { useTheme, useThemedStyles } from '@/theme/ThemeContext';
+
+const MEDALS = ['🥇', '🥈', '🥉'];
 
 const FriendsScreen = () => {
   const dispatch = useAppDispatch();
@@ -21,35 +24,47 @@ const FriendsScreen = () => {
   const styles = useThemedStyles(createStyles);
   const user = useAppSelector((state) => state.auth.user);
   const { friends, pendingRequests, isLoading } = useAppSelector((state) => state.friend);
+  const { leaderboard } = useAppSelector((state) => state.checkin);
 
-  const [email, setEmail] = useState('');
-  const [addStatus, setAddStatus] = useState<string | null>(null);
-  const [addLoading, setAddLoading] = useState(false);
+  const [tab, setTab] = useState<'friends' | 'rankings'>('friends');
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<UserSearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [requested, setRequested] = useState<Record<string, boolean>>({});
 
   const load = useCallback(() => {
     if (!user) return;
     dispatch(fetchFriends(user.id));
     dispatch(fetchPendingRequests(user.id));
+    dispatch(fetchLeaderboard(user.id));
   }, [dispatch, user]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  const handleAddFriend = async () => {
-    if (!user || !email.trim()) return;
-    setAddLoading(true);
-    setAddStatus(null);
+  // Debounced username search.
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) { setResults([]); setSearching(false); return; }
+    setSearching(true);
+    const t = setTimeout(() => {
+      apiService.searchUsers(q)
+        .then((r) => setResults(r.filter((u) => u.userId !== user?.id)))
+        .catch(() => setResults([]))
+        .finally(() => setSearching(false));
+    }, 300);
+    return () => clearTimeout(t);
+  }, [query, user?.id]);
+
+  const sendRequest = async (target: UserSearchResult) => {
+    if (!user) return;
     try {
-      const target = await apiService.getUserByEmail(email.trim());
-      await dispatch(sendFriendRequest({ requesterId: user.id, addresseeId: target.id })).unwrap();
-      setAddStatus(`Request sent to ${target.displayName}`);
-      setEmail('');
-    } catch (err: any) {
-      setAddStatus('Could not find user or request already exists');
-    } finally {
-      setAddLoading(false);
+      await dispatch(sendFriendRequest({ requesterId: user.id, addresseeId: target.userId })).unwrap();
+    } catch {
+      // request may already exist — treat as sent
     }
+    setRequested((r) => ({ ...r, [target.userId]: true }));
   };
 
   const handleRespond = (friendshipId: string, accept: boolean) => {
@@ -71,9 +86,67 @@ const FriendsScreen = () => {
     </TouchableOpacity>
   );
 
+  const renderRank = ({ item, index }: { item: LeaderboardEntry; index: number }) => {
+    const isMe = item.userId === user?.id;
+    return (
+      <TouchableOpacity
+        style={[styles.row, isMe && styles.meRow]}
+        onPress={() => (isMe ? navigation.navigate('Me') : navigation.navigate('ProfileDetail', { userId: item.userId }))}
+        activeOpacity={0.7}
+      >
+        <View style={styles.rankBox}>
+          {index < 3 ? <Text style={styles.medal}>{MEDALS[index]}</Text> : <Text style={styles.rank}>#{index + 1}</Text>}
+        </View>
+        <Avatar displayName={item.displayName} photoUrl={item.photoUrl} size={36} style={styles.avatarMargin} />
+        <View style={styles.rankInfo}>
+          <Text style={styles.name}>{item.displayName}{isMe ? ' (you)' : ''}</Text>
+          <Text style={styles.rankStreak}>🔥 {item.streakCount} week streak</Text>
+        </View>
+        <View style={styles.countBox}>
+          <Text style={styles.count}>{item.checkinsThisWeek}</Text>
+          <Text style={styles.countLabel}>this week</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const Segment = (
+    <View style={styles.segment}>
+      <TouchableOpacity style={[styles.segBtn, tab === 'friends' && styles.segBtnActive]} onPress={() => setTab('friends')}>
+        <Text style={[styles.segText, tab === 'friends' && styles.segTextActive]}>Friends</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={[styles.segBtn, tab === 'rankings' && styles.segBtnActive]} onPress={() => setTab('rankings')}>
+        <Text style={[styles.segText, tab === 'rankings' && styles.segTextActive]}>Rankings</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  if (tab === 'rankings') {
+    return (
+      <View style={styles.container}>
+        {Segment}
+        <FlatList
+          data={leaderboard}
+          keyExtractor={(item) => item.userId}
+          renderItem={renderRank}
+          refreshing={isLoading}
+          onRefresh={load}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text style={styles.emptyEmoji}>📊</Text>
+              <Text style={styles.emptyText}>No data yet. Add friends and check in!</Text>
+            </View>
+          }
+        />
+      </View>
+    );
+  }
+
   return (
-    <FlatList
-      style={styles.container}
+    <View style={styles.container}>
+      {Segment}
+      <FlatList
       data={friends}
       keyExtractor={(item) => item.id}
       renderItem={renderFriend}
@@ -83,24 +156,33 @@ const FriendsScreen = () => {
       ListHeaderComponent={
         <View>
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Add a Friend</Text>
+            <Text style={styles.sectionTitle}>Add a friend</Text>
             <TextInput
               style={styles.input}
-              placeholder="Friend's email"
+              placeholder="Search by username"
               placeholderTextColor={colors.textMuted}
-              value={email}
-              onChangeText={setEmail}
+              value={query}
+              onChangeText={setQuery}
               autoCapitalize="none"
-              keyboardType="email-address"
+              autoCorrect={false}
             />
-            <TouchableOpacity style={styles.button} onPress={handleAddFriend} disabled={addLoading} activeOpacity={0.85}>
-              {addLoading ? (
-                <ActivityIndicator color={colors.white} />
-              ) : (
-                <Text style={styles.buttonText}>Send Request</Text>
-              )}
-            </TouchableOpacity>
-            {addStatus && <Text style={styles.status}>{addStatus}</Text>}
+            {searching && <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.sm }} />}
+            {results.map((r) => (
+              <View key={r.userId} style={styles.resultRow}>
+                <Avatar displayName={r.displayName} photoUrl={r.photoUrl} size={36} style={styles.avatarMargin} />
+                <Text style={styles.resultName}>@{r.username}</Text>
+                <TouchableOpacity
+                  style={styles.addBtn}
+                  onPress={() => sendRequest(r)}
+                  disabled={requested[r.userId]}
+                >
+                  <Text style={styles.addBtnText}>{requested[r.userId] ? 'Requested' : '＋ Add'}</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+            {query.trim().length >= 2 && !searching && results.length === 0 && (
+              <Text style={styles.status}>No users found.</Text>
+            )}
           </View>
 
           {pendingRequests.length > 0 && (
@@ -132,13 +214,31 @@ const FriendsScreen = () => {
           <Text style={styles.emptyText}>No friends yet. Add one above!</Text>
         </View>
       }
-    />
+      />
+    </View>
   );
 };
 
 const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shadow) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   listContent: { padding: spacing.md },
+  segment: { flexDirection: 'row', gap: spacing.sm, padding: spacing.md, paddingBottom: 0 },
+  segBtn: {
+    flex: 1, paddingVertical: spacing.sm, borderRadius: radius.full,
+    backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, alignItems: 'center',
+  },
+  segBtnActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  segText: { ...typography.caption, fontWeight: '700' },
+  segTextActive: { color: colors.white },
+  meRow: { backgroundColor: colors.primaryLight },
+  rankBox: { width: 32, alignItems: 'center', marginRight: spacing.xs },
+  rank: { fontSize: 15, fontWeight: '800', color: colors.textMuted },
+  medal: { fontSize: 20 },
+  rankInfo: { flex: 1 },
+  rankStreak: { ...typography.caption, marginTop: 2 },
+  countBox: { alignItems: 'center' },
+  count: { fontSize: 20, fontWeight: '800', color: colors.primary },
+  countLabel: { fontSize: 10, color: colors.textMuted },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
@@ -166,6 +266,13 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shado
   },
   buttonText: { color: colors.white, fontSize: 15, fontWeight: '700' },
   status: { marginTop: spacing.sm, color: colors.textSecondary, fontSize: 13 },
+  resultRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm },
+  resultName: { ...typography.bodyBold, flex: 1 },
+  addBtn: {
+    backgroundColor: colors.primary, borderRadius: radius.full,
+    paddingHorizontal: spacing.md, paddingVertical: spacing.xs,
+  },
+  addBtnText: { color: colors.white, fontWeight: '700', fontSize: 12 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

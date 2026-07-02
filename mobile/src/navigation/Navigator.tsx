@@ -1,13 +1,12 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { Text, View } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { restoreToken } from '@/store/slices/authSlice';
 import { fetchPendingRequests } from '@/store/slices/friendSlice';
-import { fetchFeed, fetchLeaderboard } from '@/store/slices/checkinSlice';
+import { fetchLeaderboard } from '@/store/slices/checkinSlice';
 import { ThemeColors } from '@/utils/theme';
 import { useTheme } from '@/theme/ThemeContext';
 import { registerForPushNotifications } from '@/services/notificationService';
@@ -19,9 +18,11 @@ import ProfileSetupScreen from '@/screens/auth/ProfileSetupScreen';
 import WeeklyGoalGateScreen from '@/screens/WeeklyGoalGateScreen';
 import HomeScreen from '@/screens/main/HomeScreen';
 import FriendsScreen from '@/screens/main/FriendsScreen';
-import FeedScreen from '@/screens/main/FeedScreen';
-import RankingsScreen from '@/screens/main/RankingsScreen';
 import MeScreen from '@/screens/main/MeScreen';
+import GymsScreen from '@/screens/gyms/GymsScreen';
+import GymDetailScreen from '@/screens/gyms/GymDetailScreen';
+import AddGymScreen from '@/screens/gyms/AddGymScreen';
+import ScanGymScreen from '@/screens/gyms/ScanGymScreen';
 import ProfileDetailScreen from '@/screens/ProfileDetailScreen';
 import EditProfileScreen from '@/screens/EditProfileScreen';
 import CheckinCalendarScreen from '@/screens/CheckinCalendarScreen';
@@ -55,9 +56,6 @@ const TabIcon = ({ emoji, focused, showDot }: { emoji: string; focused: boolean;
   );
 };
 
-const LAST_SEEN_FEED_KEY = 'lastSeenFeedAt';
-const LAST_SEEN_RANK_KEY = 'lastSeenRank';
-
 const makeHeaderOptions = (colors: ThemeColors) => ({
   headerStyle: { backgroundColor: colors.surface },
   headerTitleStyle: { color: colors.text, fontWeight: '700' as const },
@@ -79,42 +77,8 @@ function AuthNavigator() {
 
 function MainTabNavigator() {
   const { colors } = useTheme();
-  const user = useAppSelector((state) => state.auth.user);
   const pendingRequests = useAppSelector((state) => state.friend.pendingRequests);
-  const feed = useAppSelector((state) => state.checkin.feed);
-  const leaderboard = useAppSelector((state) => state.checkin.leaderboard);
-
-  const [lastSeenFeedAt, setLastSeenFeedAt] = useState<string | null>(null);
-  const [lastSeenRank, setLastSeenRank] = useState<number | null>(null);
-  const [ranksInitialized, setRanksInitialized] = useState(false);
-
-  useEffect(() => {
-    AsyncStorage.getItem(LAST_SEEN_FEED_KEY).then(setLastSeenFeedAt);
-    AsyncStorage.getItem(LAST_SEEN_RANK_KEY).then((value) => {
-      setLastSeenRank(value ? Number(value) : null);
-      setRanksInitialized(true);
-    });
-  }, []);
-
-  const currentRank = user ? leaderboard.findIndex((entry) => entry.userId === user.id) : -1;
-
-  // Don't flag a brand-new user who has never had a stored rank yet.
-  const hasNewRankings = ranksInitialized && lastSeenRank !== null && currentRank !== -1 && currentRank !== lastSeenRank;
-  const hasNewFeed =
-    feed.length > 0 && (!lastSeenFeedAt || new Date(feed[0].createdAt) > new Date(lastSeenFeedAt));
   const hasNewFriends = pendingRequests.length > 0;
-
-  const markFeedSeen = useCallback(() => {
-    if (feed.length === 0) return;
-    AsyncStorage.setItem(LAST_SEEN_FEED_KEY, feed[0].createdAt);
-    setLastSeenFeedAt(feed[0].createdAt);
-  }, [feed]);
-
-  const markRankingsSeen = useCallback(() => {
-    if (currentRank === -1) return;
-    AsyncStorage.setItem(LAST_SEEN_RANK_KEY, String(currentRank));
-    setLastSeenRank(currentRank);
-  }, [currentRank]);
 
   return (
     <MainTab.Navigator
@@ -146,32 +110,12 @@ function MainTabNavigator() {
         }}
       />
       <MainTab.Screen
-        name="Feed"
-        component={FeedScreen}
+        name="Gyms"
+        component={GymsScreen}
         options={{
-          title: 'Feed',
-          tabBarLabel: 'Feed',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="📣" focused={focused} showDot={hasNewFeed} />,
-        }}
-        listeners={{ focus: markFeedSeen }}
-      />
-      <MainTab.Screen
-        name="Rankings"
-        component={RankingsScreen}
-        listeners={{ focus: markRankingsSeen }}
-        options={{
-          title: 'Rankings',
-          tabBarLabel: 'Rankings',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🏆" focused={focused} showDot={hasNewRankings} />,
-        }}
-      />
-      <MainTab.Screen
-        name="Me"
-        component={MeScreen}
-        options={{
-          title: 'Me',
-          tabBarLabel: 'Me',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="👤" focused={focused} />,
+          title: 'Gyms',
+          tabBarLabel: 'Gyms',
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🏋️" focused={focused} />,
         }}
       />
     </MainTab.Navigator>
@@ -208,7 +152,6 @@ function RootNavigator() {
   useEffect(() => {
     if (!user) return;
     dispatch(fetchPendingRequests(user.id));
-    dispatch(fetchFeed(user.id));
     dispatch(fetchLeaderboard(user.id));
   }, [dispatch, user]);
 
@@ -227,6 +170,11 @@ function RootNavigator() {
       ) : (
         <>
           <RootStack.Screen name="Main" component={MainTabNavigator} />
+          <RootStack.Screen
+            name="Me"
+            component={MeScreen}
+            options={{ title: 'Me', headerShown: true, ...headerOptions }}
+          />
           <RootStack.Screen
             name="ProfileDetail"
             component={ProfileDetailScreen}
@@ -253,6 +201,21 @@ function RootNavigator() {
               headerShown: true,
               ...headerOptions,
             }}
+          />
+          <RootStack.Screen
+            name="GymDetail"
+            component={GymDetailScreen}
+            options={{ title: 'Gym', headerShown: true, ...headerOptions }}
+          />
+          <RootStack.Screen
+            name="AddGym"
+            component={AddGymScreen}
+            options={{ title: 'Find a gym', headerShown: true, ...headerOptions }}
+          />
+          <RootStack.Screen
+            name="ScanGym"
+            component={ScanGymScreen}
+            options={{ title: 'Check in', headerShown: true, ...headerOptions }}
           />
         </>
       )}

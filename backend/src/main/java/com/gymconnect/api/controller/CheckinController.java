@@ -37,7 +37,13 @@ public class CheckinController {
     }
 
     @GetMapping("/feed/{userId}")
-    public ResponseEntity<List<FeedItemDTO>> getFeed(@PathVariable UUID userId) {
+    public ResponseEntity<List<FeedItemDTO>> getFeed(
+            @PathVariable UUID userId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null || size != null) {
+            return ResponseEntity.ok(checkinService.getFriendsFeed(userId, page != null ? page : 0, size != null ? size : 20));
+        }
         return ResponseEntity.ok(checkinService.getFriendsFeed(userId));
     }
 
