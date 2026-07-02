@@ -3,13 +3,17 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } fr
 import { useNavigation } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchFeed, toggleReaction } from '@/store/slices/checkinSlice';
-import { Checkin } from '@/types';
-import { colors, spacing, radius, typography, shadow } from '@/utils/theme';
-import { timeAgo, initials } from '@/utils/format';
+import { FeedItem } from '@/types';
+import Avatar from '@/components/Avatar';
+import { spacing, radius, ThemeColors, Typography, Shadow } from '@/utils/theme';
+import { useTheme, useThemedStyles } from '@/theme/ThemeContext';
+import { timeAgo } from '@/utils/format';
 
 const FeedScreen = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation<any>();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const user = useAppSelector((state) => state.auth.user);
   const { feed, isLoading } = useAppSelector((state) => state.checkin);
 
@@ -26,33 +30,49 @@ const FeedScreen = () => {
     dispatch(toggleReaction({ checkinId, userId: user.id }));
   };
 
-  const renderItem = ({ item }: { item: Checkin }) => (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{initials(item.displayName)}</Text>
+  const renderItem = ({ item }: { item: FeedItem }) => {
+    if (item.type === 'FRIEND_ACCEPTED') {
+      return (
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>🎉</Text>
+            </View>
+            <View style={styles.headerText}>
+              <Text style={styles.name}>You and {item.friendDisplayName} are now friends</Text>
+            </View>
+            <Text style={styles.time}>{timeAgo(item.createdAt)}</Text>
+          </View>
         </View>
-        <View style={styles.headerText}>
-          <TouchableOpacity onPress={() => navigation.navigate('ProfileDetail', { userId: item.userId })}>
-            <Text style={styles.name}>{item.displayName}</Text>
-          </TouchableOpacity>
-          <Text style={styles.gym}>📍 {item.gymName}</Text>
+      );
+    }
+
+    return (
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Avatar displayName={item.displayName || ''} photoUrl={item.photoUrl} style={styles.avatarMargin} />
+          <View style={styles.headerText}>
+            <TouchableOpacity onPress={() => navigation.navigate('ProfileDetail', { userId: item.userId })}>
+              <Text style={styles.name}>{item.displayName}</Text>
+            </TouchableOpacity>
+            <Text style={styles.gym}>{item.location === 'HOME' ? '🏠 Home Workout' : `📍 ${item.gymName}`}</Text>
+          </View>
+          <Text style={styles.time}>{timeAgo(item.createdAt)}</Text>
         </View>
-        <Text style={styles.time}>{timeAgo(item.createdAt)}</Text>
+
+        {item.note ? <Text style={styles.note}>"{item.note}"</Text> : null}
+
+        <TouchableOpacity
+          style={[styles.reaction, item.reactedByMe && styles.reactionActiveBg]}
+          onPress={() => handleReact(item.id)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.reactionEmoji}>{item.reactedByMe ? '🔥' : '🤍'}</Text>
+          <Text style={[styles.reactionText, item.reactedByMe && styles.reactionActive]}>{item.reactionCount}</Text>
+        </TouchableOpacity>
       </View>
-
-      {item.note ? <Text style={styles.note}>"{item.note}"</Text> : null}
-
-      <TouchableOpacity
-        style={[styles.reaction, item.reactedByMe && styles.reactionActiveBg]}
-        onPress={() => handleReact(item.id)}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.reactionEmoji}>{item.reactedByMe ? '🔥' : '🤍'}</Text>
-        <Text style={[styles.reactionText, item.reactedByMe && styles.reactionActive]}>{item.reactionCount}</Text>
-      </TouchableOpacity>
-    </View>
-  );
+    );
+  };
 
   return (
     <FlatList
@@ -73,7 +93,7 @@ const FeedScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shadow) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   listContent: { padding: spacing.md, gap: spacing.md },
   card: {
@@ -94,6 +114,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   avatarText: { color: colors.primaryDark, fontWeight: '700', fontSize: 14 },
+  avatarMargin: { marginRight: spacing.sm },
   headerText: { flex: 1 },
   name: { ...typography.bodyBold },
   gym: { ...typography.caption, marginTop: 2 },

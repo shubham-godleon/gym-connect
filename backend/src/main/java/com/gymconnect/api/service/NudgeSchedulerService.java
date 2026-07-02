@@ -26,8 +26,11 @@ public class NudgeSchedulerService {
     private final UserRepository userRepository;
     private final CheckinRepository checkinRepository;
     private final NotificationService notificationService;
+    private final WeeklyGoalService weeklyGoalService;
 
-    // Runs every 15 minutes — finds users whose nudge window is now
+    // Runs every 15 minutes — finds users whose auto-inferred nudge window is now.
+    // Users with an explicit preferredWorkoutTime are handled by sendPersonalNudges
+    // instead, so they don't get nudged twice.
     @Scheduled(cron = "0 0/15 * * * *")
     public void sendScheduledNudges() {
         LocalTime now = LocalTime.now();
@@ -35,9 +38,10 @@ public class NudgeSchedulerService {
 
         userRepository.findAll().stream()
                 .filter(u -> u.getFcmToken() != null)
+                .filter(u -> u.getPreferredWorkoutTime() == null)
                 .filter(u -> u.getNudgeDays() != null && u.getNudgeDays().contains(today))
                 .filter(u -> u.getNudgeTime() != null && isWithin15Minutes(u.getNudgeTime(), now))
-                .filter(u -> !hasCheckedInToday(u.getId()))
+                .filter(this::stillNeedsNudge)
                 .forEach(u -> {
                     String gym = u.getHomeGymName() != null ? u.getHomeGymName() : "your gym";
                     notificationService.sendNudge(u.getFcmToken(), gym);
@@ -45,10 +49,27 @@ public class NudgeSchedulerService {
                 });
     }
 
+    // Runs every minute — exact-minute reminder 5 minutes before each user's
+    // explicitly-set preferred workout time, set during profile setup/edit.
+    @Scheduled(cron = "0 * * * * *")
+    public void sendPersonalNudges() {
+        LocalTime now = LocalTime.now().truncatedTo(java.time.temporal.ChronoUnit.MINUTES);
+
+        userRepository.findAll().stream()
+                .filter(u -> u.getFcmToken() != null)
+                .filter(u -> u.getPreferredWorkoutTime() != null)
+                .filter(u -> u.getPreferredWorkoutTime().minusMinutes(5).equals(now))
+                .filter(this::stillNeedsNudge)
+                .forEach(u -> {
+                    notificationService.sendPersonalNudge(u.getFcmToken(), u.getDisplayName(), u.getStreakCount());
+                    log.info("Sent personal nudge to user {}", u.getId());
+                });
+    }
+
     // Called after each check-in to recompute this user's pattern
     public void recomputePattern(UUID userId) {
         User user = userRepository.findById(userId).orElse(null);
-        if (user == null) return;
+        if (user == null || user.getPreferredWorkoutTime() != null) return;
 
         LocalDateTime since = LocalDateTime.now().minusWeeks(4);
         List<Checkin> recent = checkinRepository.findByUserIdOrderByCreatedAtDesc(userId)
@@ -88,6 +109,15 @@ public class NudgeSchedulerService {
     private boolean isWithin15Minutes(LocalTime nudgeTime, LocalTime now) {
         long diff = Math.abs(nudgeTime.toSecondOfDay() - now.toSecondOfDay());
         return diff < 15 * 60;
+    }
+
+    // A user still needs nudging until they've hit this week's goal. Users without a
+    // goal set (legacy accounts pre-gate) fall back to the old "checked in today" check.
+    private boolean stillNeedsNudge(User user) {
+        if (user.getWeeklyGoal() == null) {
+            return !hasCheckedInToday(user.getId());
+        }
+        return !weeklyGoalService.isGoalMetThisWeek(user.getId(), user.getWeeklyGoal());
     }
 
     private boolean hasCheckedInToday(UUID userId) {

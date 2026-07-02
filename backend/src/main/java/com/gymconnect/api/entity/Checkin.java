@@ -20,10 +20,13 @@ public class Checkin {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @Column(nullable = false)
     private String gymName;
 
     private String note;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private CheckinLocation location = CheckinLocation.GYM;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -31,5 +34,10 @@ public class Checkin {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        if (location == null) location = CheckinLocation.GYM;
+    }
+
+    public enum CheckinLocation {
+        GYM, HOME
     }
 }

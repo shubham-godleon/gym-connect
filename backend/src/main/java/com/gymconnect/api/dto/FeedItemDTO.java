@@ -5,7 +5,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
-public class CheckinDTO {
+public class FeedItemDTO {
+    private String type; // "CHECKIN" | "FRIEND_ACCEPTED"
     private UUID id;
     private UUID userId;
     private String displayName;
@@ -15,5 +16,6 @@ public class CheckinDTO {
     private String location;
     private int reactionCount;
     private boolean reactedByMe;
+    private String friendDisplayName; // only set for FRIEND_ACCEPTED
     private LocalDateTime createdAt;
 }

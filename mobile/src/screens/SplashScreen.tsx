@@ -1,8 +1,11 @@
 import React from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import { colors, spacing, radius, typography } from '@/utils/theme';
+import { spacing, radius, ThemeColors, Typography } from '@/utils/theme';
+import { useTheme, useThemedStyles } from '@/theme/ThemeContext';
 
 const SplashScreen = () => {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.container}>
       <View style={styles.logoCircle}>
@@ -14,7 +17,7 @@ const SplashScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, typography: Typography) => StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   logoCircle: {
     width: 72,

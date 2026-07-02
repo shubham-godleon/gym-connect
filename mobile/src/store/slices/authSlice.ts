@@ -3,11 +3,12 @@ import { AuthState } from '@/types';
 import { supabaseService } from '@/services/supabaseService';
 import apiService, { setAuthToken } from '@/services/apiService';
 
-const initialState: AuthState = {
+const initialState: AuthState & { needsProfileSetup: boolean } = {
   user: null,
   isLoading: false,
   error: null,
   token: null,
+  needsProfileSetup: false,
 };
 
 export const signUp = createAsyncThunk(
@@ -58,6 +59,17 @@ export const signInWithGoogle = createAsyncThunk(
   }
 );
 
+export const refreshUser = createAsyncThunk(
+  'auth/refreshUser',
+  async (userId: string, { rejectWithValue }) => {
+    try {
+      return await apiService.getUserProfile(userId);
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 export const signOut = createAsyncThunk(
   'auth/signOut',
   async (_, { rejectWithValue }) => {
@@ -75,10 +87,11 @@ export const restoreToken = createAsyncThunk(
   'auth/restoreToken',
   async (_, { rejectWithValue }) => {
     try {
-      const user = await supabaseService.getCurrentUser();
-      if (user && user.email) {
-        const profile = await fetchOrCreateProfile(user.email, user.user_metadata?.displayName);
-        return { user: profile, token: 'restored' };
+      const session = await supabaseService.getSession();
+      if (session?.user?.email) {
+        setAuthToken(session.access_token);
+        const profile = await fetchOrCreateProfile(session.user.email, session.user.user_metadata?.displayName);
+        return { user: profile, token: session.access_token };
       }
       return null;
     } catch (error: any) {
@@ -102,6 +115,9 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    clearNeedsProfileSetup: (state) => {
+      state.needsProfileSetup = false;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -113,6 +129,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
+        state.needsProfileSetup = true;
       })
       .addCase(signUp.rejected, (state, action) => {
         state.isLoading = false;
@@ -139,6 +156,9 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
       })
+      .addCase(refreshUser.fulfilled, (state, action) => {
+        state.user = action.payload;
+      })
       .addCase(signOut.fulfilled, (state) => {
         state.user = null;
         state.token = null;
@@ -160,5 +180,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError } = authSlice.actions;
+export const { clearError, clearNeedsProfileSetup } = authSlice.actions;
 export default authSlice.reducer;

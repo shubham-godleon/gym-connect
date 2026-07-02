@@ -1,3 +1,6 @@
+export type WorkoutLocation = 'GYM' | 'HOME' | 'BOTH';
+export type CheckinLocation = 'GYM' | 'HOME';
+
 // User profile (matches backend UserDTO)
 export interface User {
   id: string;
@@ -5,9 +8,23 @@ export interface User {
   displayName: string;
   photoUrl?: string;
   homeGymName?: string;
+  workoutLocation: WorkoutLocation;
+  preferredWorkoutTime?: string; // "HH:mm:ss"
   streakCount: number;
   longestStreak: number;
   lastCheckinDate?: string;
+  weeklyGoal?: number; // distinct days/week target, 1-7; undefined = not set yet
+  weeklyProgress: number; // distinct days checked in so far this week
+}
+
+// A friend who's behind their weekly goal (matches backend SlackerDTO)
+export interface Slacker {
+  userId: string;
+  displayName: string;
+  photoUrl?: string;
+  weeklyProgress: number;
+  weeklyGoal: number;
+  streakCount: number;
 }
 
 // Checkin (matches backend CheckinDTO)
@@ -16,11 +33,34 @@ export interface Checkin {
   userId: string;
   displayName: string;
   photoUrl?: string;
-  gymName: string;
+  gymName?: string;
   note?: string;
+  location: CheckinLocation;
   reactionCount: number;
   reactedByMe: boolean;
   createdAt: string;
+}
+
+// Feed item (matches backend FeedItemDTO) — either a checkin or a friend-accepted event
+export interface FeedItem {
+  type: 'CHECKIN' | 'FRIEND_ACCEPTED';
+  id: string;
+  userId: string;
+  displayName?: string;
+  photoUrl?: string;
+  gymName?: string;
+  note?: string;
+  location?: CheckinLocation;
+  reactionCount: number;
+  reactedByMe: boolean;
+  friendDisplayName?: string;
+  createdAt: string;
+}
+
+// Calendar day (matches backend CheckinDayDTO)
+export interface CheckinDay {
+  date: string; // "YYYY-MM-DD"
+  count: number;
 }
 
 // Leaderboard entry (matches backend LeaderboardEntryDTO)

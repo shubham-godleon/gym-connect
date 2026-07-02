@@ -3,13 +3,16 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { store } from '@/store';
 import { Navigation } from '@/navigation/Navigator';
+import { ThemeProvider } from '@/theme/ThemeContext';
 
 export default function App() {
   return (
     <Provider store={store}>
-      <SafeAreaProvider>
-        <Navigation />
-      </SafeAreaProvider>
+      <ThemeProvider>
+        <SafeAreaProvider>
+          <Navigation />
+        </SafeAreaProvider>
+      </ThemeProvider>
     </Provider>
   );
 }

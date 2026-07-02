@@ -10,11 +10,36 @@ import com.google.firebase.messaging.Aps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @Slf4j
 public class NotificationService {
+
+    private static final List<String> MOTIVATIONAL_QUOTES = List.of(
+        "Your only limit is you.",
+        "Train insane or remain the same.",
+        "Excuses don't burn calories.",
+        "Yesterday you said tomorrow.",
+        "Hustle for that muscle.",
+        "The mind believes, the body achieves.",
+        "Comfort is the enemy of progress.",
+        "No grit, no pearl.",
+        "Discipline over motivation.",
+        "Suffer now, live a champion.",
+        "No shortcuts. Just work.",
+        "Sweat is cheap. Results are priceless.",
+        "Action cures fear.",
+        "Be stronger than your excuses.",
+        "One workout at a time.",
+        "Stronger than yesterday.",
+        "Pain is temporary. Pride is forever.",
+        "Earned, not given.",
+        "Don't wish for it. Work for it.",
+        "Make yourself proud."
+    );
 
     public void sendCheckinAlert(String fcmToken, String friendName, String gymName) {
         send(fcmToken,
@@ -28,6 +53,18 @@ public class NotificationService {
         send(fcmToken,
             "Gym day? 💪",
             "You usually hit " + gymName + " around now. Tap to check in.",
+            Map.of("type", "NUDGE")
+        );
+    }
+
+    public void sendPersonalNudge(String fcmToken, String displayName, int streakCount) {
+        String quote = MOTIVATIONAL_QUOTES.get(ThreadLocalRandom.current().nextInt(MOTIVATIONAL_QUOTES.size()));
+        String streakLine = streakCount > 0
+            ? "Keep that streak — " + streakCount + " week" + (streakCount == 1 ? "" : "s") + " strong, " + displayName + "."
+            : "Hit your weekly goal, " + displayName + ".";
+        send(fcmToken,
+            "\"" + quote + "\"",
+            streakLine,
             Map.of("type", "NUDGE")
         );
     }

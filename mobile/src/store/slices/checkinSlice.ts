@@ -1,9 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { Checkin, LeaderboardEntry } from '@/types';
+import { FeedItem, LeaderboardEntry, CheckinLocation } from '@/types';
 import apiService from '@/services/apiService';
 
 export interface CheckinState {
-  feed: Checkin[];
+  feed: FeedItem[];
   leaderboard: LeaderboardEntry[];
   isLoading: boolean;
   error: string | null;
@@ -40,11 +40,11 @@ export const fetchLeaderboard = createAsyncThunk(
 
 export const createCheckin = createAsyncThunk(
   'checkin/create',
-  async ({ userId, gymName, note }: { userId: string; gymName?: string; note?: string }, { rejectWithValue }) => {
+  async ({ userId, location }: { userId: string; location: CheckinLocation }, { rejectWithValue }) => {
     try {
-      return await apiService.checkin(userId, gymName, note);
+      return await apiService.checkin(userId, location);
     } catch (error: any) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
@@ -82,8 +82,17 @@ const checkinSlice = createSlice({
       .addCase(fetchLeaderboard.fulfilled, (state, action) => {
         state.leaderboard = action.payload;
       })
+      .addCase(createCheckin.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
       .addCase(createCheckin.fulfilled, (state, action) => {
-        state.feed.unshift(action.payload);
+        state.isLoading = false;
+        state.feed.unshift({ ...action.payload, type: 'CHECKIN' });
+      })
+      .addCase(createCheckin.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
       })
       .addCase(toggleReaction.fulfilled, (state, action) => {
         const checkin = state.feed.find((c) => c.id === action.payload.checkinId);

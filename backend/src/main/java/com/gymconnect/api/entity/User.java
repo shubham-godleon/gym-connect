@@ -29,6 +29,13 @@ public class User {
 
     private String homeGymName;
 
+    @Column(name = "workout_location", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private WorkoutLocation workoutLocation = WorkoutLocation.GYM;
+
+    @Column(name = "preferred_workout_time")
+    private LocalTime preferredWorkoutTime;
+
     @Column(nullable = false)
     private Integer streakCount = 0;
 
@@ -36,6 +43,14 @@ public class User {
     private Integer longestStreak = 0;
 
     private LocalDate lastCheckinDate;
+
+    // Weekly training goal (distinct days/week, 1-7). Null = user hasn't set one yet.
+    @Column(name = "weekly_goal")
+    private Integer weeklyGoal;
+
+    // Stamped once, the first time a goal is set — where weekly-streak resolution starts counting.
+    @Column(name = "weekly_goal_started_at")
+    private LocalDateTime weeklyGoalStartedAt;
 
     private String fcmToken;
 
@@ -62,5 +77,9 @@ public class User {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public enum WorkoutLocation {
+        GYM, HOME, BOTH
     }
 }

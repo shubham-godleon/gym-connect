@@ -14,12 +14,15 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '@/navigation/types';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { signUp, clearError } from '@/store/slices/authSlice';
-import { colors, spacing, radius, typography, shadow } from '@/utils/theme';
+import { spacing, radius, ThemeColors, Typography, Shadow } from '@/utils/theme';
+import { useTheme, useThemedStyles } from '@/theme/ThemeContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'SignUp'>;
 
 const SignUpScreen = ({ navigation }: Props) => {
   const dispatch = useAppDispatch();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { isLoading, error } = useAppSelector((state) => state.auth);
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
@@ -90,7 +93,7 @@ const SignUpScreen = ({ navigation }: Props) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shadow) => StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
   container: { flexGrow: 1, justifyContent: 'center', padding: spacing.lg },
   logoCircle: {

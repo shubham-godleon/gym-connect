@@ -10,12 +10,15 @@ import {
 } from '@/store/slices/friendSlice';
 import apiService from '@/services/apiService';
 import { User } from '@/types';
-import { colors, spacing, radius, typography, shadow } from '@/utils/theme';
-import { initials } from '@/utils/format';
+import Avatar from '@/components/Avatar';
+import { spacing, radius, ThemeColors, Typography, Shadow } from '@/utils/theme';
+import { useTheme, useThemedStyles } from '@/theme/ThemeContext';
 
 const FriendsScreen = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation<any>();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const user = useAppSelector((state) => state.auth.user);
   const { friends, pendingRequests, isLoading } = useAppSelector((state) => state.friend);
 
@@ -60,9 +63,7 @@ const FriendsScreen = () => {
       onPress={() => navigation.navigate('ProfileDetail', { userId: item.id })}
       activeOpacity={0.7}
     >
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{initials(item.displayName)}</Text>
-      </View>
+      <Avatar displayName={item.displayName} photoUrl={item.photoUrl} style={styles.avatarMargin} />
       <Text style={styles.name}>{item.displayName}</Text>
       <View style={styles.streakPill}>
         <Text style={styles.streak}>🔥 {item.streakCount}</Text>
@@ -107,9 +108,7 @@ const FriendsScreen = () => {
               <Text style={styles.sectionTitle}>Pending Requests</Text>
               {pendingRequests.map((req) => (
                 <View key={req.id} style={styles.requestRow}>
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>{initials(req.requesterDisplayName)}</Text>
-                  </View>
+                  <Avatar displayName={req.requesterDisplayName} photoUrl={req.requesterPhotoUrl} style={styles.avatarMargin} />
                   <Text style={styles.requestName}>{req.requesterDisplayName}</Text>
                   <View style={styles.requestActions}>
                     <TouchableOpacity onPress={() => handleRespond(req.id, true)} activeOpacity={0.7}>
@@ -137,7 +136,7 @@ const FriendsScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shadow) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   listContent: { padding: spacing.md },
   card: {
@@ -176,16 +175,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     ...shadow.card,
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.full,
-    backgroundColor: colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.sm,
-  },
-  avatarText: { color: colors.primaryDark, fontWeight: '700', fontSize: 14 },
+  avatarMargin: { marginRight: spacing.sm },
   name: { ...typography.bodyBold, flex: 1 },
   streakPill: {
     backgroundColor: colors.background,

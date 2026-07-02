@@ -32,6 +32,9 @@ public class Friendship {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "responded_at")
+    private LocalDateTime respondedAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

@@ -24,6 +24,10 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "react-dom": "^19.2.7"
+    "react-dom": "19.1.4"
+  },
+  "overrides": {
+    "react": "19.1.4",
+    "react-dom": "19.1.4"
   }
 }

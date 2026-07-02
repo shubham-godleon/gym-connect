@@ -1,15 +1,20 @@
 import React, { useCallback, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchLeaderboard } from '@/store/slices/checkinSlice';
 import { LeaderboardEntry } from '@/types';
-import { colors, spacing, radius, typography, shadow } from '@/utils/theme';
-import { initials } from '@/utils/format';
+import Avatar from '@/components/Avatar';
+import { spacing, radius, ThemeColors, Typography, Shadow } from '@/utils/theme';
+import { useTheme, useThemedStyles } from '@/theme/ThemeContext';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
 
 const RankingsScreen = () => {
   const dispatch = useAppDispatch();
+  const navigation = useNavigation<any>();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const user = useAppSelector((state) => state.auth.user);
   const { leaderboard, isLoading } = useAppSelector((state) => state.checkin);
 
@@ -24,7 +29,13 @@ const RankingsScreen = () => {
   const renderItem = ({ item, index }: { item: LeaderboardEntry; index: number }) => {
     const isMe = item.userId === user?.id;
     return (
-      <View style={[styles.row, isMe && styles.meRow]}>
+      <TouchableOpacity
+        style={[styles.row, isMe && styles.meRow]}
+        onPress={() =>
+          isMe ? navigation.navigate('Me') : navigation.navigate('ProfileDetail', { userId: item.userId })
+        }
+        activeOpacity={0.7}
+      >
         <View style={styles.rankBox}>
           {index < 3 ? (
             <Text style={styles.medal}>{MEDALS[index]}</Text>
@@ -32,21 +43,19 @@ const RankingsScreen = () => {
             <Text style={styles.rank}>#{index + 1}</Text>
           )}
         </View>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{initials(item.displayName)}</Text>
-        </View>
+        <Avatar displayName={item.displayName} photoUrl={item.photoUrl} size={36} style={styles.avatarMargin} />
         <View style={styles.info}>
           <Text style={styles.name}>
             {item.displayName}
             {isMe ? ' (you)' : ''}
           </Text>
-          <Text style={styles.streak}>🔥 {item.streakCount} day streak</Text>
+          <Text style={styles.streak}>🔥 {item.streakCount} week streak</Text>
         </View>
         <View style={styles.countBox}>
           <Text style={styles.count}>{item.checkinsThisWeek}</Text>
           <Text style={styles.countLabel}>this week</Text>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -70,7 +79,7 @@ const RankingsScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shadow) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   title: { ...typography.h2, padding: spacing.md, paddingBottom: spacing.sm },
   listContent: { paddingHorizontal: spacing.md, paddingBottom: spacing.md },
@@ -87,16 +96,7 @@ const styles = StyleSheet.create({
   rankBox: { width: 32, alignItems: 'center' },
   rank: { fontSize: 15, fontWeight: '800', color: colors.textMuted },
   medal: { fontSize: 20 },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: spacing.sm,
-  },
-  avatarText: { color: colors.primaryDark, fontWeight: '700', fontSize: 12 },
+  avatarMargin: { marginHorizontal: spacing.sm },
   info: { flex: 1 },
   name: { ...typography.bodyBold },
   streak: { ...typography.caption, marginTop: 2 },

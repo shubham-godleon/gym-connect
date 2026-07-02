@@ -4,6 +4,7 @@
     "name": "Gym Connect",
     "slug": "gym-connect",
     "version": "1.0.0",
+    "scheme": "gymconnect",
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -19,7 +20,13 @@
       "expo-notifications",
       "@react-native-google-signin/google-signin",
       "@react-native-firebase/app",
-      "@react-native-firebase/messaging"
+      "@react-native-firebase/messaging",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Gym Connect needs access to your photos to set a profile picture."
+        }
+      ]
     ],
     "extra": {
       "eas": {

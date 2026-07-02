@@ -46,6 +46,7 @@ public class FriendshipService {
         }
 
         friendship.setStatus(accept ? FriendshipStatus.ACCEPTED : FriendshipStatus.DECLINED);
+        friendship.setRespondedAt(java.time.LocalDateTime.now());
         friendshipRepository.save(friendship);
 
         if (accept) {

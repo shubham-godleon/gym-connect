@@ -19,4 +19,8 @@ public interface CheckinRepository extends JpaRepository<Checkin, UUID> {
     List<Object[]> countCheckinsThisWeekForFriends(@Param("friendIds") List<UUID> friendIds, @Param("weekStart") LocalDateTime weekStart);
 
     boolean existsByUserIdAndCreatedAtBetween(UUID userId, LocalDateTime start, LocalDateTime end);
+
+    long countByUserIdAndCreatedAtBetween(UUID userId, LocalDateTime start, LocalDateTime end);
+
+    List<Checkin> findByUserIdAndCreatedAtBetween(UUID userId, LocalDateTime start, LocalDateTime end);
 }

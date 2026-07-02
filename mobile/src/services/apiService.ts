@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { apiConfig } from './config';
-import { User, Checkin, LeaderboardEntry, FriendRequest } from '@/types';
+import { User, Checkin, FeedItem, LeaderboardEntry, FriendRequest, CheckinDay, CheckinLocation, Slacker } from '@/types';
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: apiConfig.baseURL,
@@ -42,14 +42,24 @@ export const apiService = {
     await apiClient.put(`/users/${userId}/fcm-token`, { fcmToken });
   },
 
-  // Checkins
-  checkin: async (userId: string, gymName?: string, note?: string): Promise<Checkin> => {
-    const response = await apiClient.post(`/checkins`, { userId, gymName, note });
+  getSlackingFriends: async (userId: string): Promise<Slacker[]> => {
+    const response = await apiClient.get(`/users/${userId}/slacking-friends`);
     return response.data;
   },
 
-  getFeed: async (userId: string): Promise<Checkin[]> => {
+  // Checkins
+  checkin: async (userId: string, location: CheckinLocation): Promise<Checkin> => {
+    const response = await apiClient.post(`/checkins`, { userId, location });
+    return response.data;
+  },
+
+  getFeed: async (userId: string): Promise<FeedItem[]> => {
     const response = await apiClient.get(`/checkins/feed/${userId}`);
+    return response.data;
+  },
+
+  getCalendar: async (userId: string, year: number): Promise<CheckinDay[]> => {
+    const response = await apiClient.get(`/checkins/calendar/${userId}/${year}`);
     return response.data;
   },
 
