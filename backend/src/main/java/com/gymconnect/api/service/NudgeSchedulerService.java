@@ -1,15 +1,17 @@
 package com.gymconnect.api.service;
 
 import com.gymconnect.api.entity.Checkin;
+import com.gymconnect.api.entity.Friendship;
 import com.gymconnect.api.entity.User;
 import com.gymconnect.api.repository.CheckinRepository;
+import com.gymconnect.api.repository.FriendshipRepository;
 import com.gymconnect.api.repository.UserRepository;
+import com.gymconnect.api.util.Names;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -25,6 +27,7 @@ public class NudgeSchedulerService {
 
     private final UserRepository userRepository;
     private final CheckinRepository checkinRepository;
+    private final FriendshipRepository friendshipRepository;
     private final NotificationService notificationService;
     private final WeeklyGoalService weeklyGoalService;
 
@@ -43,8 +46,13 @@ public class NudgeSchedulerService {
                 .filter(u -> u.getNudgeTime() != null && isWithin15Minutes(u.getNudgeTime(), now))
                 .filter(this::stillNeedsNudge)
                 .forEach(u -> {
-                    String gym = u.getHomeGymName() != null ? u.getHomeGymName() : "your gym";
-                    notificationService.sendNudge(u.getFcmToken(), gym);
+                    FriendLead lead = topFriendAhead(u);
+                    if (lead != null) {
+                        notificationService.sendFriendNudge(u.getFcmToken(), Names.shown(u), lead.name(), lead.days());
+                    } else {
+                        String gym = u.getHomeGymName() != null ? u.getHomeGymName() : "your gym";
+                        notificationService.sendNudge(u.getFcmToken(), gym);
+                    }
                     log.info("Sent nudge to user {}", u.getId());
                 });
     }
@@ -61,7 +69,12 @@ public class NudgeSchedulerService {
                 .filter(u -> u.getPreferredWorkoutTime().minusMinutes(5).equals(now))
                 .filter(this::stillNeedsNudge)
                 .forEach(u -> {
-                    notificationService.sendPersonalNudge(u.getFcmToken(), u.getDisplayName(), u.getStreakCount());
+                    FriendLead lead = topFriendAhead(u);
+                    if (lead != null) {
+                        notificationService.sendFriendNudge(u.getFcmToken(), Names.shown(u), lead.name(), lead.days());
+                    } else {
+                        notificationService.sendPersonalNudge(u.getFcmToken(), Names.shown(u), u.getStreakCount());
+                    }
                     log.info("Sent personal nudge to user {}", u.getId());
                 });
     }
@@ -105,6 +118,30 @@ public class NudgeSchedulerService {
         user.setNudgeTime(nudgeDays.isEmpty() ? null : nudgeTime);
         userRepository.save(user);
     }
+
+    // The accepted friend with the most check-in days this week, if any is ahead of
+    // this user — used to build a "your friend is showing up" nudge. Null if none ahead.
+    private FriendLead topFriendAhead(User user) {
+        int myProgress = weeklyGoalService.getThisWeekProgress(user.getId());
+        List<UUID> friendIds = friendshipRepository
+                .findByUserAndStatus(user.getId(), Friendship.FriendshipStatus.ACCEPTED)
+                .stream()
+                .map(f -> f.getRequesterId().equals(user.getId()) ? f.getAddresseeId() : f.getRequesterId())
+                .collect(Collectors.toList());
+
+        User best = null;
+        int bestProgress = myProgress;
+        for (User friend : userRepository.findAllById(friendIds)) {
+            int p = weeklyGoalService.getThisWeekProgress(friend.getId());
+            if (p > bestProgress) {
+                bestProgress = p;
+                best = friend;
+            }
+        }
+        return best == null ? null : new FriendLead(Names.shown(best), bestProgress);
+    }
+
+    private record FriendLead(String name, int days) {}
 
     private boolean isWithin15Minutes(LocalTime nudgeTime, LocalTime now) {
         long diff = Math.abs(nudgeTime.toSecondOfDay() - now.toSecondOfDay());

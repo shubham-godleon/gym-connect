@@ -69,6 +69,16 @@ public class NotificationService {
         );
     }
 
+    // Gentle-shame nudge: references a friend who's ahead of you this week.
+    public void sendFriendNudge(String fcmToken, String myName, String friendName, int friendDays) {
+        send(fcmToken,
+            friendName + " is showing up 👀",
+            friendName + " has trained " + friendDays + " day" + (friendDays == 1 ? "" : "s")
+                + " this week — don't fall behind, " + myName + ".",
+            Map.of("type", "NUDGE")
+        );
+    }
+
     public void sendFistBump(String fcmToken, String fromName) {
         send(fcmToken,
             fromName + " fist-bumped your workout! 👊",
