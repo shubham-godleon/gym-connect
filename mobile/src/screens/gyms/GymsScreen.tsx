@@ -1,8 +1,11 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, RefreshControl } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import apiService from '@/services/apiService';
 import { Gym } from '@/types';
+import Icon from '@/components/Icon';
+import ScreenBackground from '@/components/ScreenBackground';
 import { spacing, radius, ThemeColors, Typography, Shadow } from '@/utils/theme';
 import { useTheme, useThemedStyles } from '@/theme/ThemeContext';
 
@@ -10,6 +13,7 @@ const GymsScreen = () => {
   const navigation = useNavigation<any>();
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const insets = useSafeAreaInsets();
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -41,13 +45,15 @@ const GymsScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.actions}>
+    <ScreenBackground plain>
+      <View style={[styles.actions, { paddingTop: insets.top + spacing.sm }]}>
         <TouchableOpacity style={styles.primaryBtn} onPress={() => navigation.navigate('ScanGym')} activeOpacity={0.85}>
-          <Text style={styles.primaryBtnText}>📷 Scan to check in</Text>
+          <Icon name="qrcode-scan" size={18} color={colors.white} />
+          <Text style={styles.primaryBtnText}>Scan to check in</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.secondaryBtn} onPress={() => navigation.navigate('AddGym')} activeOpacity={0.85}>
-          <Text style={styles.secondaryBtnText}>＋ Find / add a gym</Text>
+          <Icon name="map-marker-plus" size={18} color={colors.primary} />
+          <Text style={styles.secondaryBtnText}>Find a gym</Text>
         </TouchableOpacity>
       </View>
 
@@ -60,34 +66,34 @@ const GymsScreen = () => {
         ListHeaderComponent={gyms.length > 0 ? <Text style={styles.sectionTitle}>Your gyms</Text> : null}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>🏋️</Text>
+            <Icon name="dumbbell" size={44} color={colors.textMuted} style={{ marginBottom: spacing.sm }} />
             <Text style={styles.emptyText}>You haven't joined a gym yet.</Text>
             <Text style={styles.emptySub}>Scan a gym's QR or find one nearby to join its community.</Text>
           </View>
         }
       />
-    </View>
+    </ScreenBackground>
   );
 };
 
 const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shadow) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: 'transparent' },
   actions: { flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
   primaryBtn: {
-    flex: 1, backgroundColor: colors.primary, borderRadius: radius.sm,
-    paddingVertical: 14, alignItems: 'center', ...shadow.button,
+    flex: 1, flexDirection: 'row', gap: spacing.sm, backgroundColor: colors.primary, borderRadius: radius.md,
+    paddingVertical: 14, alignItems: 'center', justifyContent: 'center', ...shadow.button,
   },
   primaryBtnText: { color: colors.white, fontWeight: '700', fontSize: 14 },
   secondaryBtn: {
-    flex: 1, backgroundColor: colors.surface, borderRadius: radius.sm,
-    paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border,
+    flex: 1, flexDirection: 'row', gap: spacing.sm, backgroundColor: colors.glassFill, borderRadius: radius.md,
+    paddingVertical: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.glassBorder,
   },
   secondaryBtnText: { color: colors.text, fontWeight: '700', fontSize: 14 },
-  list: { paddingHorizontal: spacing.md, paddingBottom: spacing.md },
+  list: { paddingHorizontal: spacing.md, paddingBottom: 110 },
   sectionTitle: { ...typography.h3, marginBottom: spacing.sm },
   card: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: colors.surface, borderRadius: radius.lg,
+    backgroundColor: colors.glassFill, borderRadius: radius.lg,
     padding: spacing.md, marginBottom: spacing.sm, ...shadow.card,
   },
   cardMain: { flex: 1 },

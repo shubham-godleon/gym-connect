@@ -228,7 +228,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shado
     flex: 1,
     paddingVertical: spacing.sm,
     borderRadius: radius.full,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glassFill,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
@@ -237,7 +237,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shado
   toggleText: { ...typography.caption, fontWeight: '600' },
   toggleTextActive: { color: colors.white },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glassFill,
     borderRadius: radius.lg,
     padding: spacing.lg,
     ...shadow.card,
@@ -262,7 +262,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shado
   statsRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.lg },
   statCard: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glassFill,
     borderRadius: radius.lg,
     padding: spacing.md,
     alignItems: 'center',

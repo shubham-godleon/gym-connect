@@ -6,6 +6,7 @@ import { refreshUser } from '@/store/slices/authSlice';
 import { supabaseService } from '@/services/supabaseService';
 import apiService from '@/services/apiService';
 import ProfileFields, { ProfileFieldsValue } from '@/components/ProfileFields';
+import ScreenBackground from '@/components/ScreenBackground';
 import { spacing, radius, ThemeColors, Typography, Shadow } from '@/utils/theme';
 import { useTheme, useThemedStyles, ThemeMode } from '@/theme/ThemeContext';
 
@@ -69,6 +70,7 @@ const EditProfileScreen = () => {
   };
 
   return (
+    <ScreenBackground plain>
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.card}>
         <Text style={styles.label}>Username</Text>
@@ -118,27 +120,28 @@ const EditProfileScreen = () => {
         {isSaving ? <ActivityIndicator color={colors.white} /> : <Text style={styles.buttonText}>Save Changes</Text>}
       </TouchableOpacity>
     </ScrollView>
+    </ScreenBackground>
   );
 };
 
 const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shadow) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: spacing.lg },
   themeRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   themeChip: {
     flex: 1,
     paddingVertical: spacing.sm,
     borderRadius: radius.full,
-    backgroundColor: colors.background,
+    backgroundColor: colors.glassFill,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.glassBorder,
     alignItems: 'center',
   },
   themeChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
   themeChipText: { ...typography.caption, fontWeight: '600' },
   themeChipTextActive: { color: colors.white },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glassFill,
     borderRadius: radius.lg,
     padding: spacing.lg,
     ...shadow.card,
@@ -147,12 +150,12 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shado
   hint: { ...typography.caption, color: colors.textMuted, marginTop: -spacing.xs, marginBottom: spacing.md },
   input: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.glassBorder,
     borderRadius: radius.sm,
     padding: 14,
     marginBottom: spacing.md,
     fontSize: 16,
-    backgroundColor: colors.background,
+    backgroundColor: colors.glassFill,
     color: colors.text,
   },
   error: { color: colors.danger, marginTop: spacing.md, textAlign: 'center' },

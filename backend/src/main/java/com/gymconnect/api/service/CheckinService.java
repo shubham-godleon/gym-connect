@@ -151,6 +151,11 @@ public class CheckinService {
         return items;
     }
 
+    // Total kudos (reactions from others) this user has received — powers the Home dot.
+    public long countKudosReceived(UUID userId) {
+        return reactionRepository.countKudosReceived(userId);
+    }
+
     public List<CheckinDayDTO> getCalendar(UUID userId, int year) {
         return checkinRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .filter(c -> c.getCreatedAt().getYear() == year)

@@ -20,6 +20,13 @@ export const darkColors = {
   overlay: 'rgba(0,0,0,0.6)',
   dangerBg: '#3A1F1C',
   successBg: '#1C2E26',
+  // Smoked-glass tokens
+  glassFill: 'rgba(255,255,255,0.05)',   // faux-glass card surface
+  glassBorder: 'rgba(255,255,255,0.10)', // hairline translucent stroke
+  glassHeavy: 'rgba(22,22,26,0.72)',     // base under real blur (navbar/headers)
+  glow: 'rgba(255,109,31,0.16)',         // ambient orange glow (kept near the top)
+  gradientA: '#201A16',                  // background gradient (top, faint warmth)
+  gradientB: '#141416',                  // background gradient (bottom, neutral charcoal)
 };
 
 // Light palette — same keys, same orange accents on light steel.
@@ -42,6 +49,12 @@ export const lightColors: ThemeColors = {
   overlay: 'rgba(0,0,0,0.4)',
   dangerBg: '#FDE7E4',
   successBg: '#E4F5EC',
+  glassFill: 'rgba(255,255,255,0.60)',
+  glassBorder: 'rgba(0,0,0,0.06)',
+  glassHeavy: 'rgba(247,247,251,0.72)',
+  glow: 'rgba(255,109,31,0.18)',        // a touch stronger so the light side shows warmth too
+  gradientA: '#FDEEE1',                 // warm cream at the top (mirrors dark)
+  gradientB: '#F4F4F8',                 // cool near-white at the bottom
 };
 
 export type ThemeColors = typeof darkColors;
@@ -55,12 +68,13 @@ export const spacing = {
   xxl: 48,
 };
 
-// Structured, industrial corners — sharp, not pill-shaped.
+// Soft, glassy corners.
 export const radius = {
-  sm: 4,
-  md: 6,
-  lg: 8,
-  full: 999, // reserved for circular avatars only
+  sm: 10,
+  md: 14,
+  lg: 18,
+  xl: 24,
+  full: 999,
 };
 
 export const makeTypography = (colors: ThemeColors) => ({
@@ -76,22 +90,22 @@ export const makeTypography = (colors: ThemeColors) => ({
 
 export type Typography = ReturnType<typeof makeTypography>;
 
-// Cast-metal look: defined border instead of diffused shadow.
+// Smoked glass: soft ambient shadow + hairline translucent stroke (no hard border).
 export const makeShadow = (colors: ThemeColors) => ({
   card: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.glassBorder,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
+    elevation: 2,
   },
   button: {
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
     elevation: 3,
   },
 });

@@ -10,6 +10,16 @@ export function timeAgo(isoDate: string): string {
   return new Date(isoDate).toLocaleDateString();
 }
 
+// Title-cases a label so feed locations render consistently ("the gym" -> "The Gym").
+export function titleCase(s?: string): string {
+  if (!s) return '';
+  return s
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+}
+
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();

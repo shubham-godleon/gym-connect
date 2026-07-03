@@ -7,6 +7,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import apiService from '@/services/apiService';
 import { getCurrentCoords } from '@/utils/location';
 import { GymCheckinResult } from '@/types';
+import ScreenBackground from '@/components/ScreenBackground';
 import { spacing, radius, ThemeColors, Typography, Shadow } from '@/utils/theme';
 import { useTheme, useThemedStyles } from '@/theme/ThemeContext';
 
@@ -58,6 +59,7 @@ const ScanGymScreen = () => {
   // Result screen (success or "too far")
   if (result) {
     return (
+      <ScreenBackground plain>
       <View style={styles.center}>
         <Text style={styles.resultEmoji}>{result.verified ? '✅' : '📍'}</Text>
         <Text style={styles.resultTitle}>{result.verified ? 'Checked in!' : 'Not quite there'}</Text>
@@ -71,10 +73,12 @@ const ScanGymScreen = () => {
           </TouchableOpacity>
         )}
       </View>
+      </ScreenBackground>
     );
   }
 
   return (
+    <ScreenBackground plain>
     <View style={styles.container}>
       {!isWeb && permission?.granted && (
         <View style={styles.cameraWrap}>
@@ -114,17 +118,18 @@ const ScanGymScreen = () => {
         {error && <Text style={styles.error}>{error}</Text>}
       </View>
     </View>
+    </ScreenBackground>
   );
 };
 
 const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shadow) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg },
-  center: { flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
+  container: { flex: 1, backgroundColor: 'transparent', padding: spacing.lg },
+  center: { flex: 1, backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
   cameraWrap: { alignItems: 'center', marginBottom: spacing.lg },
   camera: { width: '100%', aspectRatio: 1, borderRadius: radius.lg, overflow: 'hidden' },
   scanHint: { ...typography.caption, marginTop: spacing.sm },
   permBtn: {
-    backgroundColor: colors.surface, borderRadius: radius.sm, padding: 16,
+    backgroundColor: colors.glassFill, borderRadius: radius.sm, padding: 16,
     alignItems: 'center', borderWidth: 1, borderColor: colors.border, marginBottom: spacing.lg,
   },
   permBtnText: { color: colors.text, fontWeight: '700' },
@@ -132,7 +137,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shado
   manualLabel: { ...typography.label, marginBottom: spacing.sm },
   input: {
     borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm,
-    padding: 14, fontSize: 16, backgroundColor: colors.surface, color: colors.text, marginBottom: spacing.sm,
+    padding: 14, fontSize: 16, backgroundColor: colors.glassFill, color: colors.text, marginBottom: spacing.sm,
   },
   primaryBtn: {
     backgroundColor: colors.primary, borderRadius: radius.sm, padding: 16,

@@ -6,6 +6,8 @@ import apiService from '@/services/apiService';
 import { User } from '@/types';
 import { useAppSelector } from '@/store/hooks';
 import Avatar from '@/components/Avatar';
+import Icon from '@/components/Icon';
+import ScreenBackground from '@/components/ScreenBackground';
 import { spacing, radius, ThemeColors, Typography, Shadow } from '@/utils/theme';
 import { useTheme, useThemedStyles } from '@/theme/ThemeContext';
 
@@ -45,12 +47,18 @@ const ProfileDetailScreen = ({ route, navigation }: Props) => {
   const isOwnProfile = currentUser?.id === userId;
 
   return (
+    <ScreenBackground plain>
     <View style={styles.container}>
       <View style={styles.headerCard}>
-        <Avatar displayName={profile.displayName} photoUrl={profile.photoUrl} size={72} />
+        <Avatar displayName={profile.displayName} photoUrl={profile.photoUrl} size={88} />
         <Text style={styles.name}>{profile.displayName}</Text>
         {profile.username && <Text style={styles.handle}>@{profile.username}</Text>}
-        {profile.homeGymName && <Text style={styles.gym}>🏋️ {profile.homeGymName}</Text>}
+        {profile.homeGymName && (
+          <View style={styles.gymRow}>
+            <Icon name="dumbbell" size={13} color={colors.textSecondary} />
+            <Text style={styles.gym}>{profile.homeGymName}</Text>
+          </View>
+        )}
         {isOwnProfile && (
           <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile')}>
             <Text style={styles.editButtonText}>Edit Profile</Text>
@@ -60,12 +68,12 @@ const ProfileDetailScreen = ({ route, navigation }: Props) => {
 
       <View style={styles.statsRow}>
         <View style={[styles.statCard, styles.statCardPrimary]}>
-          <Text style={styles.statEmoji}>🔥</Text>
+          <Icon name="fire" size={24} color={colors.primary} style={styles.statIcon} />
           <Text style={styles.statValuePrimary}>{profile.streakCount}</Text>
           <Text style={styles.statLabelPrimary}>Week Streak</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statEmoji}>🏆</Text>
+          <Icon name="trophy" size={24} color={colors.highlight} style={styles.statIcon} />
           <Text style={styles.statValue}>{profile.longestStreak}</Text>
           <Text style={styles.statLabel}>Best Streak</Text>
         </View>
@@ -76,19 +84,23 @@ const ProfileDetailScreen = ({ route, navigation }: Props) => {
         onPress={() => navigation.navigate('CheckinCalendar', { userId })}
         activeOpacity={0.7}
       >
-        <Text style={styles.activityText}>📅 View Activity</Text>
+        <View style={styles.activityLeft}>
+          <Icon name="calendar-month" size={18} color={colors.text} />
+          <Text style={styles.activityText}>View Activity</Text>
+        </View>
         <Text style={styles.activityChevron}>›</Text>
       </TouchableOpacity>
     </View>
+    </ScreenBackground>
   );
 };
 
 const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shadow) => StyleSheet.create({
-  container: { flex: 1, padding: spacing.lg, backgroundColor: colors.background },
+  container: { flex: 1, padding: spacing.lg, backgroundColor: 'transparent' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   errorText: { ...typography.body, color: colors.danger },
   headerCard: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glassFill,
     borderRadius: radius.lg,
     padding: spacing.lg,
     alignItems: 'center',
@@ -97,29 +109,31 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shado
   },
   name: { ...typography.h2, marginTop: spacing.sm, marginBottom: spacing.xs },
   handle: { ...typography.caption, color: colors.primary, fontWeight: '700', marginBottom: spacing.xs },
+  gymRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   gym: { ...typography.caption },
-  editButton: { marginTop: spacing.sm },
-  editButtonText: { color: colors.primary, fontWeight: '600', fontSize: 14 },
+  editButton: { marginTop: spacing.md },
+  editButtonText: { color: colors.primary, fontWeight: '700', fontSize: 14 },
   statsRow: { flexDirection: 'row', gap: spacing.md },
   statCard: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glassFill,
     borderRadius: radius.lg,
     padding: spacing.md,
     alignItems: 'center',
     ...shadow.card,
   },
   statCardPrimary: { backgroundColor: colors.primaryLight },
-  statEmoji: { fontSize: 22, marginBottom: spacing.xs },
+  statIcon: { marginBottom: spacing.xs },
   statValue: { fontSize: 26, fontWeight: '800', color: colors.text },
   statValuePrimary: { fontSize: 26, fontWeight: '800', color: colors.primary },
   statLabel: { ...typography.caption, marginTop: spacing.xs },
   statLabelPrimary: { ...typography.caption, color: colors.primaryDark, marginTop: spacing.xs, fontWeight: '600' },
+  activityLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   activityRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glassFill,
     borderRadius: radius.lg,
     padding: spacing.md,
     marginTop: spacing.lg,

@@ -14,6 +14,8 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '@/navigation/types';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { signUp, clearError } from '@/store/slices/authSlice';
+import ScreenBackground from '@/components/ScreenBackground';
+import Icon from '@/components/Icon';
 import { spacing, radius, ThemeColors, Typography, Shadow } from '@/utils/theme';
 import { useTheme, useThemedStyles } from '@/theme/ThemeContext';
 
@@ -34,10 +36,11 @@ const SignUpScreen = ({ navigation }: Props) => {
   };
 
   return (
+    <ScreenBackground plain>
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.logoCircle}>
-          <Text style={styles.logoEmoji}>💪</Text>
+          <Icon name="arm-flex" size={30} color={colors.primary} />
         </View>
         <Text style={styles.title}>Create Account</Text>
         <Text style={styles.subtitle}>Join friends. Build streaks. Show up.</Text>
@@ -90,11 +93,12 @@ const SignUpScreen = ({ navigation }: Props) => {
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
+    </ScreenBackground>
   );
 };
 
 const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shadow) => StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.background },
+  flex: { flex: 1, backgroundColor: 'transparent' },
   container: { flexGrow: 1, justifyContent: 'center', padding: spacing.lg },
   logoCircle: {
     width: 64,
@@ -117,7 +121,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shado
   },
   error: { color: colors.danger, textAlign: 'center', fontSize: 13, fontWeight: '600' },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glassFill,
     borderRadius: radius.lg,
     padding: spacing.lg,
     ...shadow.card,
@@ -125,11 +129,11 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shado
   label: { ...typography.label, marginBottom: spacing.xs, marginTop: spacing.sm },
   input: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.glassBorder,
     borderRadius: radius.sm,
     padding: 14,
     fontSize: 16,
-    backgroundColor: colors.background,
+    backgroundColor: colors.glassFill,
     color: colors.text,
   },
   button: {

@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import apiService from '@/services/apiService';
 import { Gym } from '@/types';
 import { getCurrentCoords, Coords } from '@/utils/location';
+import ScreenBackground from '@/components/ScreenBackground';
 import { spacing, radius, ThemeColors, Typography, Shadow } from '@/utils/theme';
 import { useTheme, useThemedStyles } from '@/theme/ThemeContext';
 
@@ -70,6 +71,7 @@ const AddGymScreen = () => {
   };
 
   return (
+    <ScreenBackground plain>
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {locError && (
         <View style={styles.warnBox}>
@@ -134,11 +136,12 @@ const AddGymScreen = () => {
         <Text style={styles.muted}>Getting your location…</Text>
       )}
     </ScrollView>
+    </ScreenBackground>
   );
 };
 
 const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shadow) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: spacing.lg },
   sectionTitle: { ...typography.h3, marginBottom: spacing.sm },
   muted: { ...typography.caption, marginBottom: spacing.sm },
@@ -146,7 +149,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shado
   warnText: { color: colors.danger, fontSize: 13, fontWeight: '600' },
   row: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: colors.surface, borderRadius: radius.md,
+    backgroundColor: colors.glassFill, borderRadius: radius.md,
     padding: spacing.md, marginBottom: spacing.sm, ...shadow.card,
   },
   rowMain: { flex: 1 },
@@ -158,7 +161,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shado
   input: {
     borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm,
     padding: 14, marginBottom: spacing.sm, fontSize: 16,
-    backgroundColor: colors.surface, color: colors.text,
+    backgroundColor: colors.glassFill, color: colors.text,
   },
   primaryBtn: {
     backgroundColor: colors.primary, borderRadius: radius.sm, padding: 16,

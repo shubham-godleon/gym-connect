@@ -12,6 +12,9 @@ import { fetchLeaderboard } from '@/store/slices/checkinSlice';
 import apiService from '@/services/apiService';
 import { User, UserSearchResult, LeaderboardEntry } from '@/types';
 import Avatar from '@/components/Avatar';
+import Icon from '@/components/Icon';
+import ScreenBackground from '@/components/ScreenBackground';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing, radius, ThemeColors, Typography, Shadow } from '@/utils/theme';
 import { useTheme, useThemedStyles } from '@/theme/ThemeContext';
 
@@ -22,6 +25,7 @@ const FriendsScreen = () => {
   const navigation = useNavigation<any>();
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const insets = useSafeAreaInsets();
   const user = useAppSelector((state) => state.auth.user);
   const { friends, pendingRequests, isLoading } = useAppSelector((state) => state.friend);
   const { leaderboard } = useAppSelector((state) => state.checkin);
@@ -81,7 +85,8 @@ const FriendsScreen = () => {
       <Avatar displayName={item.displayName} photoUrl={item.photoUrl} style={styles.avatarMargin} />
       <Text style={styles.name}>{item.displayName}</Text>
       <View style={styles.streakPill}>
-        <Text style={styles.streak}>🔥 {item.streakCount}</Text>
+        <Icon name="fire" size={13} color={colors.primary} />
+        <Text style={styles.streak}>{item.streakCount}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -100,7 +105,10 @@ const FriendsScreen = () => {
         <Avatar displayName={item.displayName} photoUrl={item.photoUrl} size={36} style={styles.avatarMargin} />
         <View style={styles.rankInfo}>
           <Text style={styles.name}>{item.displayName}{isMe ? ' (you)' : ''}</Text>
-          <Text style={styles.rankStreak}>🔥 {item.streakCount} week streak</Text>
+          <View style={styles.rankStreakRow}>
+            <Icon name="fire" size={12} color={colors.primary} />
+            <Text style={styles.rankStreak}>{item.streakCount} week streak</Text>
+          </View>
         </View>
         <View style={styles.countBox}>
           <Text style={styles.count}>{item.checkinsThisWeek}</Text>
@@ -111,7 +119,7 @@ const FriendsScreen = () => {
   };
 
   const Segment = (
-    <View style={styles.segment}>
+    <View style={[styles.segment, { paddingTop: insets.top + spacing.sm }]}>
       <TouchableOpacity style={[styles.segBtn, tab === 'friends' && styles.segBtnActive]} onPress={() => setTab('friends')}>
         <Text style={[styles.segText, tab === 'friends' && styles.segTextActive]}>Friends</Text>
       </TouchableOpacity>
@@ -123,7 +131,7 @@ const FriendsScreen = () => {
 
   if (tab === 'rankings') {
     return (
-      <View style={styles.container}>
+      <ScreenBackground plain>
         {Segment}
         <FlatList
           data={leaderboard}
@@ -139,12 +147,12 @@ const FriendsScreen = () => {
             </View>
           }
         />
-      </View>
+      </ScreenBackground>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <ScreenBackground plain>
       {Segment}
       <FlatList
       data={friends}
@@ -215,13 +223,13 @@ const FriendsScreen = () => {
         </View>
       }
       />
-    </View>
+    </ScreenBackground>
   );
 };
 
 const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shadow) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  listContent: { padding: spacing.md },
+  container: { flex: 1, backgroundColor: 'transparent' },
+  listContent: { padding: spacing.md, paddingBottom: 110 },
   segment: { flexDirection: 'row', gap: spacing.sm, padding: spacing.md, paddingBottom: 0 },
   segBtn: {
     flex: 1, paddingVertical: spacing.sm, borderRadius: radius.full,
@@ -235,12 +243,13 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shado
   rank: { fontSize: 15, fontWeight: '800', color: colors.textMuted },
   medal: { fontSize: 20 },
   rankInfo: { flex: 1 },
-  rankStreak: { ...typography.caption, marginTop: 2 },
+  rankStreakRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 2 },
+  rankStreak: { ...typography.caption },
   countBox: { alignItems: 'center' },
   count: { fontSize: 20, fontWeight: '800', color: colors.primary },
   countLabel: { fontSize: 10, color: colors.textMuted },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glassFill,
     borderRadius: radius.lg,
     padding: spacing.lg,
     marginBottom: spacing.md,
@@ -250,12 +259,12 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shado
   listTitle: { ...typography.h3, marginBottom: spacing.sm, marginLeft: spacing.xs },
   input: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.glassBorder,
     borderRadius: radius.sm,
     padding: 14,
     marginBottom: spacing.sm,
     fontSize: 16,
-    backgroundColor: colors.background,
+    backgroundColor: colors.glassFill,
     color: colors.text,
   },
   button: {
@@ -276,7 +285,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shado
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glassFill,
     borderRadius: radius.md,
     padding: spacing.md,
     marginBottom: spacing.sm,
@@ -285,12 +294,15 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shado
   avatarMargin: { marginRight: spacing.sm },
   name: { ...typography.bodyBold, flex: 1 },
   streakPill: {
-    backgroundColor: colors.background,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: colors.glassFill,
     borderRadius: radius.full,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
   },
-  streak: { fontSize: 13, color: colors.textSecondary, fontWeight: '600' },
+  streak: { fontSize: 13, color: colors.textSecondary, fontWeight: '700' },
   requestRow: {
     flexDirection: 'row',
     alignItems: 'center',

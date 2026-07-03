@@ -5,6 +5,7 @@ import { clearNeedsProfileSetup, refreshUser } from '@/store/slices/authSlice';
 import { supabaseService } from '@/services/supabaseService';
 import apiService from '@/services/apiService';
 import ProfileFields, { ProfileFieldsValue } from '@/components/ProfileFields';
+import ScreenBackground from '@/components/ScreenBackground';
 import { spacing, radius, ThemeColors, Typography, Shadow } from '@/utils/theme';
 import { useTheme, useThemedStyles } from '@/theme/ThemeContext';
 
@@ -48,6 +49,7 @@ const ProfileSetupScreen = () => {
   };
 
   return (
+    <ScreenBackground plain>
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Set up your profile</Text>
       <Text style={styles.subtitle}>Set your weekly goal to get started — you can change it later.</Text>
@@ -61,16 +63,17 @@ const ProfileSetupScreen = () => {
         {isSaving ? <ActivityIndicator color={colors.white} /> : <Text style={styles.buttonText}>Continue</Text>}
       </TouchableOpacity>
     </ScrollView>
+    </ScreenBackground>
   );
 };
 
 const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shadow) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: spacing.lg },
   title: { ...typography.h1, fontSize: 24, marginBottom: spacing.xs, marginTop: spacing.lg },
   subtitle: { ...typography.body, color: colors.textSecondary, marginBottom: spacing.lg },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glassFill,
     borderRadius: radius.lg,
     padding: spacing.lg,
     ...shadow.card,

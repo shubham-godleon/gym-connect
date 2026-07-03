@@ -57,6 +57,11 @@ public class CheckinController {
         return ResponseEntity.ok(checkinService.getWeeklyLeaderboard(userId));
     }
 
+    @GetMapping("/kudos/{userId}")
+    public ResponseEntity<Map<String, Long>> getKudosCount(@PathVariable UUID userId) {
+        return ResponseEntity.ok(Map.of("count", checkinService.countKudosReceived(userId)));
+    }
+
     @PostMapping("/{checkinId}/react")
     public ResponseEntity<Map<String, Boolean>> react(
             @PathVariable UUID checkinId,

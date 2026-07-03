@@ -1,10 +1,16 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FeedItem, LeaderboardEntry, CheckinLocation } from '@/types';
 import apiService from '@/services/apiService';
+import type { RootState } from '@/store';
+
+const KUDOS_SEEN_KEY = 'lastSeenKudos';
 
 export interface CheckinState {
   feed: FeedItem[];
   leaderboard: LeaderboardEntry[];
+  kudosCount: number; // total kudos received (from backend)
+  kudosSeen: number;  // count at last Home visit (persisted)
   isLoading: boolean;
   error: string | null;
 }
@@ -12,6 +18,8 @@ export interface CheckinState {
 const initialState: CheckinState = {
   feed: [],
   leaderboard: [],
+  kudosCount: 0,
+  kudosSeen: 0,
   isLoading: false,
   error: null,
 };
@@ -61,6 +69,26 @@ export const toggleReaction = createAsyncThunk(
   }
 );
 
+export const fetchKudosCount = createAsyncThunk(
+  'checkin/fetchKudosCount',
+  async (userId: string) => {
+    return await apiService.getKudosCount(userId);
+  }
+);
+
+// Read the last-seen kudos count from storage (call once at startup).
+export const restoreKudosSeen = createAsyncThunk('checkin/restoreKudosSeen', async () => {
+  const v = await AsyncStorage.getItem(KUDOS_SEEN_KEY);
+  return v ? Number(v) : 0;
+});
+
+// Mark current kudos as seen (call when Home is viewed) — clears the dot.
+export const markKudosSeen = createAsyncThunk('checkin/markKudosSeen', async (_, { getState }) => {
+  const count = (getState() as RootState).checkin.kudosCount;
+  await AsyncStorage.setItem(KUDOS_SEEN_KEY, String(count));
+  return count;
+});
+
 const checkinSlice = createSlice({
   name: 'checkin',
   initialState,
@@ -100,6 +128,15 @@ const checkinSlice = createSlice({
           checkin.reactedByMe = action.payload.reacted;
           checkin.reactionCount += action.payload.reacted ? 1 : -1;
         }
+      })
+      .addCase(fetchKudosCount.fulfilled, (state, action) => {
+        state.kudosCount = action.payload;
+      })
+      .addCase(restoreKudosSeen.fulfilled, (state, action) => {
+        state.kudosSeen = action.payload;
+      })
+      .addCase(markKudosSeen.fulfilled, (state, action) => {
+        state.kudosSeen = action.payload;
       });
   },
 });

@@ -6,9 +6,10 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { restoreToken } from '@/store/slices/authSlice';
 import { fetchPendingRequests } from '@/store/slices/friendSlice';
-import { fetchLeaderboard } from '@/store/slices/checkinSlice';
+import { fetchLeaderboard, fetchKudosCount, restoreKudosSeen } from '@/store/slices/checkinSlice';
 import { ThemeColors } from '@/utils/theme';
 import { useTheme } from '@/theme/ThemeContext';
+import GlassTabBar from './GlassTabBar';
 import { registerForPushNotifications } from '@/services/notificationService';
 import apiService from '@/services/apiService';
 
@@ -34,31 +35,11 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const MainTab = createBottomTabNavigator<MainTabParamList>();
 
-const TabIcon = ({ emoji, focused, showDot }: { emoji: string; focused: boolean; showDot?: boolean }) => {
-  const { colors } = useTheme();
-  return (
-    <View>
-      <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.5 }}>{emoji}</Text>
-      {showDot ? (
-        <View
-          style={{
-            position: 'absolute',
-            top: -2,
-            right: -4,
-            width: 8,
-            height: 8,
-            borderRadius: 4,
-            backgroundColor: colors.danger,
-          }}
-        />
-      ) : null}
-    </View>
-  );
-};
-
 const makeHeaderOptions = (colors: ThemeColors) => ({
-  headerStyle: { backgroundColor: colors.surface },
+  // Match the gradient's top colour so the header blends into each screen's backdrop.
+  headerStyle: { backgroundColor: colors.gradientA },
   headerTitleStyle: { color: colors.text, fontWeight: '700' as const },
+  headerTintColor: colors.text,
   headerShadowVisible: false,
 });
 
@@ -77,46 +58,32 @@ function AuthNavigator() {
 
 function MainTabNavigator() {
   const { colors } = useTheme();
-  const pendingRequests = useAppSelector((state) => state.friend.pendingRequests);
-  const hasNewFriends = pendingRequests.length > 0;
 
   return (
     <MainTab.Navigator
+      tabBar={(props) => <GlassTabBar {...props} />}
       screenOptions={{
         headerShown: true,
         ...makeHeaderOptions(colors),
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}
     >
       <MainTab.Screen
         name="Home"
         component={HomeScreen}
         options={{
-          title: 'Home',
+          headerShown: false,
           tabBarLabel: 'Home',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} />,
         }}
       />
       <MainTab.Screen
         name="Friends"
         component={FriendsScreen}
-        options={{
-          title: 'Friends',
-          tabBarLabel: 'Friends',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🤝" focused={focused} showDot={hasNewFriends} />,
-        }}
+        options={{ headerShown: false, tabBarLabel: 'Friends' }}
       />
       <MainTab.Screen
         name="Gyms"
         component={GymsScreen}
-        options={{
-          title: 'Gyms',
-          tabBarLabel: 'Gyms',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🏋️" focused={focused} />,
-        }}
+        options={{ headerShown: false, tabBarLabel: 'Gyms' }}
       />
     </MainTab.Navigator>
   );
@@ -136,6 +103,7 @@ function RootNavigator() {
     };
 
     bootstrapAsync();
+    dispatch(restoreKudosSeen());
   }, [dispatch]);
 
   useEffect(() => {
@@ -153,6 +121,7 @@ function RootNavigator() {
     if (!user) return;
     dispatch(fetchPendingRequests(user.id));
     dispatch(fetchLeaderboard(user.id));
+    dispatch(fetchKudosCount(user.id));
   }, [dispatch, user]);
 
   if (isLoading) {

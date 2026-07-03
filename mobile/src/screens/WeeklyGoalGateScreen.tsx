@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { refreshUser } from '@/store/slices/authSlice';
 import apiService from '@/services/apiService';
+import ScreenBackground from '@/components/ScreenBackground';
 import { spacing, radius, ThemeColors, Typography, Shadow } from '@/utils/theme';
 import { useTheme, useThemedStyles } from '@/theme/ThemeContext';
 
@@ -34,6 +35,7 @@ const WeeklyGoalGateScreen = () => {
   };
 
   return (
+    <ScreenBackground plain>
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Set your weekly goal</Text>
       <Text style={styles.subtitle}>
@@ -59,16 +61,17 @@ const WeeklyGoalGateScreen = () => {
         {isSaving ? <ActivityIndicator color={colors.white} /> : <Text style={styles.buttonText}>Confirm</Text>}
       </TouchableOpacity>
     </ScrollView>
+    </ScreenBackground>
   );
 };
 
 const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shadow) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: spacing.lg, flexGrow: 1, justifyContent: 'center' },
   title: { ...typography.h1, fontSize: 24, marginBottom: spacing.xs },
   subtitle: { ...typography.body, color: colors.textSecondary, marginBottom: spacing.lg },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.glassFill,
     borderRadius: radius.lg,
     padding: spacing.lg,
     ...shadow.card,

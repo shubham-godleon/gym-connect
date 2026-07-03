@@ -11,6 +11,8 @@ import { Gym, RosterEntry, LeaderboardEntry } from '@/types';
 import { getCurrentCoords } from '@/utils/location';
 import { useAppSelector } from '@/store/hooks';
 import Avatar from '@/components/Avatar';
+import Icon from '@/components/Icon';
+import ScreenBackground from '@/components/ScreenBackground';
 import { spacing, radius, ThemeColors, Typography, Shadow } from '@/utils/theme';
 import { useTheme, useThemedStyles } from '@/theme/ThemeContext';
 
@@ -92,6 +94,7 @@ const GymDetailScreen = ({ route, navigation }: Props) => {
   const hereNow = roster.filter((r) => r.hereNow);
 
   return (
+    <ScreenBackground plain>
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.headerCard}>
         <Text style={styles.name}>{gym.name}</Text>
@@ -109,7 +112,12 @@ const GymDetailScreen = ({ route, navigation }: Props) => {
         disabled={checkingIn}
         activeOpacity={0.85}
       >
-        {checkingIn ? <ActivityIndicator color={colors.white} /> : <Text style={styles.primaryBtnText}>📍 Check in here</Text>}
+        {checkingIn ? <ActivityIndicator color={colors.white} /> : (
+          <View style={styles.primaryBtnRow}>
+            <Icon name="map-marker-check" size={20} color={colors.white} />
+            <Text style={styles.primaryBtnText}>Check in here</Text>
+          </View>
+        )}
       </TouchableOpacity>
 
       <View style={styles.rowBtns}>
@@ -165,6 +173,7 @@ const GymDetailScreen = ({ route, navigation }: Props) => {
         )}
       </View>
     </ScrollView>
+    </ScreenBackground>
   );
 };
 
@@ -190,39 +199,40 @@ const RosterRow = ({ entry, me, requested, onAddFriend, onOpen, styles }: any) =
 );
 
 const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shadow) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: spacing.lg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
   muted: { ...typography.caption },
   headerCard: {
-    backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg,
+    backgroundColor: colors.glassFill, borderRadius: radius.lg, padding: spacing.lg,
     marginBottom: spacing.md, ...shadow.card,
   },
   name: { ...typography.h2 },
   address: { ...typography.caption, marginTop: spacing.xs },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
   metaChip: {
-    ...typography.caption, backgroundColor: colors.background, color: colors.textSecondary,
+    ...typography.caption, backgroundColor: colors.glassFill, color: colors.textSecondary,
     borderRadius: radius.full, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, overflow: 'hidden',
   },
   hereChip: { color: colors.primaryDark, backgroundColor: colors.primaryLight },
-  primaryBtn: { backgroundColor: colors.primary, borderRadius: radius.sm, padding: 16, alignItems: 'center', ...shadow.button },
+  primaryBtn: { backgroundColor: colors.primary, borderRadius: radius.md, padding: 16, alignItems: 'center', ...shadow.button },
+  primaryBtnRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   btnDisabled: { opacity: 0.5 },
   primaryBtnText: { color: colors.white, fontSize: 16, fontWeight: '700' },
   rowBtns: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   secondaryBtn: {
-    flex: 1, backgroundColor: colors.surface, borderRadius: radius.sm, paddingVertical: 14,
-    alignItems: 'center', borderWidth: 1, borderColor: colors.border,
+    flex: 1, backgroundColor: colors.glassFill, borderRadius: radius.md, paddingVertical: 14,
+    alignItems: 'center', borderWidth: 1, borderColor: colors.glassBorder,
   },
   secondaryBtnText: { color: colors.text, fontWeight: '700', fontSize: 14 },
   qrCard: {
-    backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg,
+    backgroundColor: colors.glassFill, borderRadius: radius.lg, padding: spacing.lg,
     alignItems: 'center', marginTop: spacing.md, ...shadow.card,
   },
   qrHint: { ...typography.caption, marginTop: spacing.md },
   qrCode: { ...typography.caption, color: colors.textMuted, marginTop: spacing.xs },
   section: {
-    backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.md,
+    backgroundColor: colors.glassFill, borderRadius: radius.lg, padding: spacing.md,
     marginTop: spacing.md, ...shadow.card,
   },
   sectionTitle: { ...typography.h3, marginBottom: spacing.sm },
@@ -230,7 +240,7 @@ const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shado
   rosterMain: { flex: 1, flexDirection: 'row', alignItems: 'center' },
   rosterName: { ...typography.bodyBold },
   rosterMeta: { ...typography.caption, marginTop: 2 },
-  addFriendBtn: { backgroundColor: colors.background, borderRadius: radius.full, paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderWidth: 1, borderColor: colors.border },
+  addFriendBtn: { backgroundColor: colors.glassFill, borderRadius: radius.full, paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderWidth: 1, borderColor: colors.glassBorder },
   addFriendText: { fontSize: 12, fontWeight: '700', color: colors.primary },
   lbRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm },
   lbRank: { width: 34, fontSize: 15, fontWeight: '800', color: colors.textMuted },

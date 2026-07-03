@@ -77,6 +77,11 @@ export const apiService = {
     return response.data;
   },
 
+  getKudosCount: async (userId: string): Promise<number> => {
+    const response = await apiClient.get(`/checkins/kudos/${userId}`);
+    return response.data.count;
+  },
+
   toggleReaction: async (checkinId: string, userId: string): Promise<boolean> => {
     const response = await apiClient.post(`/checkins/${checkinId}/react`, { userId });
     return response.data.reacted;
