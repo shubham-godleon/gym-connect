@@ -21,8 +21,8 @@ export const darkColors = {
   dangerBg: '#3A1F1C',
   successBg: '#1C2E26',
   // Smoked-glass tokens
-  glassFill: 'rgba(255,255,255,0.05)',   // faux-glass card surface
-  glassBorder: 'rgba(255,255,255,0.10)', // hairline translucent stroke
+  glassFill: 'rgba(255,255,255,0.08)',   // faux-glass card surface (reads on flat + gradient)
+  glassBorder: 'rgba(255,255,255,0.12)', // hairline translucent stroke
   glassHeavy: 'rgba(22,22,26,0.72)',     // base under real blur (navbar/headers)
   glow: 'rgba(255,109,31,0.16)',         // ambient orange glow (kept near the top)
   gradientA: '#201A16',                  // background gradient (top, faint warmth)

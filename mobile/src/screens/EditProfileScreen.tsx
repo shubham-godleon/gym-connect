@@ -7,13 +7,16 @@ import { supabaseService } from '@/services/supabaseService';
 import apiService from '@/services/apiService';
 import ProfileFields, { ProfileFieldsValue } from '@/components/ProfileFields';
 import ScreenBackground from '@/components/ScreenBackground';
+import Avatar from '@/components/Avatar';
+import Icon, { IconName } from '@/components/Icon';
+import { pickAvatar } from '@/utils/photo';
 import { spacing, radius, ThemeColors, Typography, Shadow } from '@/utils/theme';
 import { useTheme, useThemedStyles, ThemeMode } from '@/theme/ThemeContext';
 
-const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
-  { value: 'light', label: '☀️ Light' },
-  { value: 'dark', label: '🌙 Dark' },
-  { value: 'system', label: '📱 System' },
+const THEME_OPTIONS: { value: ThemeMode; label: string; icon: IconName }[] = [
+  { value: 'light', label: 'Light', icon: 'white-balance-sunny' },
+  { value: 'dark', label: 'Dark', icon: 'moon-waning-crescent' },
+  { value: 'system', label: 'System', icon: 'cellphone' },
 ];
 
 const EditProfileScreen = () => {
@@ -34,8 +37,9 @@ const EditProfileScreen = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleFieldsChange = (value: ProfileFieldsValue) => {
-    setFields(value);
+  const changePhoto = async () => {
+    const picked = await pickAvatar();
+    if (picked) setFields((f) => ({ ...f, photoUri: picked.uri, photoBase64: picked.base64 }));
   };
 
   const handleSave = async () => {
@@ -54,7 +58,7 @@ const EditProfileScreen = () => {
 
       const uname = username.trim().toLowerCase();
       await apiService.updateUserProfile(user.id, {
-        username: uname, // display name stays distinct — profile shows both
+        username: uname,
         photoUrl,
         workoutLocation: fields.workoutLocation,
         preferredWorkoutTime: fields.preferredWorkoutTime,
@@ -69,102 +73,153 @@ const EditProfileScreen = () => {
     }
   };
 
+  const SectionHeader = ({ icon, title }: { icon: IconName; title: string }) => (
+    <View style={styles.sectionHeader}>
+      <Icon name={icon} size={16} color={colors.primary} />
+      <Text style={styles.sectionTitle}>{title}</Text>
+    </View>
+  );
+
   return (
     <ScreenBackground plain>
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.card}>
-        <Text style={styles.label}>Username</Text>
-        <TextInput
-          style={styles.input}
-          value={username}
-          onChangeText={(t) => setUsername(t.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-          placeholder="username"
-          placeholderTextColor={colors.textMuted}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        <Text style={styles.hint}>Lowercase letters, numbers, underscore — this is how friends find you.</Text>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        {/* Photo hero */}
+        <View style={styles.hero}>
+          <TouchableOpacity onPress={changePhoto} activeOpacity={0.85}>
+            <Avatar displayName={username} photoUrl={fields.photoUri} size={104} />
+            <View style={styles.cameraBadge}>
+              <Icon name="camera" size={16} color={colors.white} />
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.heroHandle}>@{username || 'username'}</Text>
+        </View>
 
-        <Text style={styles.label}>New password (leave blank to keep current)</Text>
-        <TextInput
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          placeholder="••••••••"
-          placeholderTextColor={colors.textMuted}
-          secureTextEntry
-        />
+        {/* Account */}
+        <SectionHeader icon="account-circle-outline" title="Account" />
+        <View style={styles.card}>
+          <Text style={styles.label}>Username</Text>
+          <View style={styles.inputRow}>
+            <Text style={styles.inputPrefix}>@</Text>
+            <TextInput
+              style={styles.inputFlex}
+              value={username}
+              onChangeText={(t) => setUsername(t.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+              placeholder="username"
+              placeholderTextColor={colors.textMuted}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
+          <Text style={styles.hint}>Lowercase letters, numbers, underscore — how friends find you.</Text>
 
-        <ProfileFields value={{ ...fields, displayName: username }} onChange={handleFieldsChange} />
+          <View style={styles.divider} />
 
-        <Text style={styles.label}>Appearance</Text>
-        <View style={styles.themeRow}>
-          {THEME_OPTIONS.map((opt) => (
-            <TouchableOpacity
-              key={opt.value}
-              style={[styles.themeChip, mode === opt.value && styles.themeChipActive]}
-              onPress={() => setMode(opt.value)}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.themeChipText, mode === opt.value && styles.themeChipTextActive]}>
-                {opt.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          <Text style={styles.label}>New password</Text>
+          <TextInput
+            style={styles.input}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Leave blank to keep current"
+            placeholderTextColor={colors.textMuted}
+            secureTextEntry
+          />
+        </View>
+
+        {/* Training */}
+        <SectionHeader icon="dumbbell" title="Training" />
+        <View style={styles.card}>
+          <ProfileFields value={{ ...fields, displayName: username }} onChange={setFields} hidePhoto />
+        </View>
+
+        {/* Appearance */}
+        <SectionHeader icon="palette-outline" title="Appearance" />
+        <View style={styles.card}>
+          <View style={styles.themeRow}>
+            {THEME_OPTIONS.map((opt) => {
+              const active = mode === opt.value;
+              return (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[styles.themeChip, active && styles.themeChipActive]}
+                  onPress={() => setMode(opt.value)}
+                  activeOpacity={0.8}
+                >
+                  <Icon name={opt.icon} size={18} color={active ? colors.white : colors.text} />
+                  <Text style={[styles.themeChipText, active && styles.themeChipTextActive]}>{opt.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
         {error && <Text style={styles.error}>{error}</Text>}
-      </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleSave} disabled={isSaving} activeOpacity={0.85}>
-        {isSaving ? <ActivityIndicator color={colors.white} /> : <Text style={styles.buttonText}>Save Changes</Text>}
-      </TouchableOpacity>
-    </ScrollView>
+        <TouchableOpacity style={styles.button} onPress={handleSave} disabled={isSaving} activeOpacity={0.85}>
+          {isSaving ? <ActivityIndicator color={colors.white} /> : <Text style={styles.buttonText}>Save Changes</Text>}
+        </TouchableOpacity>
+      </ScrollView>
     </ScreenBackground>
   );
 };
 
 const createStyles = (colors: ThemeColors, typography: Typography, shadow: Shadow) => StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent' },
-  content: { padding: spacing.lg },
-  themeRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
-  themeChip: {
-    flex: 1,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.full,
-    backgroundColor: colors.glassFill,
-    borderWidth: 1,
-    borderColor: colors.glassBorder,
-    alignItems: 'center',
+  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  hero: { alignItems: 'center', marginBottom: spacing.lg },
+  cameraBadge: {
+    position: 'absolute', bottom: 0, right: 0,
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: colors.background,
   },
-  themeChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  themeChipText: { ...typography.caption, fontWeight: '600' },
-  themeChipTextActive: { color: colors.white },
+  heroHandle: { ...typography.bodyBold, color: colors.primary, marginTop: spacing.sm },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: spacing.lg, marginBottom: spacing.sm, marginLeft: spacing.xs },
+  sectionTitle: { ...typography.label, color: colors.textSecondary },
   card: {
     backgroundColor: colors.glassFill,
     borderRadius: radius.lg,
     padding: spacing.lg,
     ...shadow.card,
   },
-  label: { ...typography.label, marginBottom: spacing.xs },
-  hint: { ...typography.caption, color: colors.textMuted, marginTop: -spacing.xs, marginBottom: spacing.md },
+  label: { ...typography.label, marginBottom: spacing.sm, color: colors.text },
+  hint: { ...typography.caption, color: colors.textMuted, marginTop: spacing.xs },
+  divider: { height: 1, backgroundColor: colors.glassBorder, marginVertical: spacing.lg },
   input: {
     borderWidth: 1,
     borderColor: colors.glassBorder,
     borderRadius: radius.sm,
     padding: 14,
-    marginBottom: spacing.md,
     fontSize: 16,
-    backgroundColor: colors.glassFill,
+    backgroundColor: colors.background,
     color: colors.text,
   },
+  inputRow: {
+    flexDirection: 'row', alignItems: 'center',
+    borderWidth: 1, borderColor: colors.glassBorder, borderRadius: radius.sm,
+    paddingHorizontal: 14, backgroundColor: colors.background,
+  },
+  inputPrefix: { fontSize: 16, fontWeight: '700', color: colors.textMuted, marginRight: 2 },
+  inputFlex: { flex: 1, paddingVertical: 14, fontSize: 16, color: colors.text },
+  themeRow: { flexDirection: 'row', gap: spacing.sm },
+  themeChip: {
+    flex: 1, flexDirection: 'row', gap: spacing.xs, justifyContent: 'center',
+    paddingVertical: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    alignItems: 'center',
+  },
+  themeChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  themeChipText: { ...typography.caption, fontWeight: '700' },
+  themeChipTextActive: { color: colors.white },
   error: { color: colors.danger, marginTop: spacing.md, textAlign: 'center' },
   button: {
     backgroundColor: colors.primary,
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
     padding: 16,
     alignItems: 'center',
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
     ...shadow.button,
   },
   buttonText: { color: colors.white, fontSize: 16, fontWeight: '700' },

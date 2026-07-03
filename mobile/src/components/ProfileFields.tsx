@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Avatar from './Avatar';
+import Icon from './Icon';
 import WheelPicker from './WheelPicker';
 import { WorkoutLocation } from '@/types';
+import { pickAvatar } from '@/utils/photo';
 import { spacing, radius, ThemeColors, Typography } from '@/utils/theme';
-import { useThemedStyles } from '@/theme/ThemeContext';
+import { useTheme, useThemedStyles } from '@/theme/ThemeContext';
 
 const LOCATION_OPTIONS: { value: WorkoutLocation; label: string }[] = [
   { value: 'GYM', label: '🏋️ Gym' },
@@ -46,40 +46,31 @@ export interface ProfileFieldsValue {
 interface Props {
   value: ProfileFieldsValue;
   onChange: (value: ProfileFieldsValue) => void;
+  hidePhoto?: boolean; // Edit Profile renders its own photo hero
 }
 
-const ProfileFields = ({ value, onChange }: Props) => {
+const ProfileFields = ({ value, onChange, hidePhoto }: Props) => {
+  const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
-  const pickPhoto = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Permission needed', 'Allow photo access to set a profile picture.');
-      return;
-    }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-      allowsEditing: true,
-      aspect: [1, 1],
-    });
-    if (result.canceled || !result.assets[0]) return;
-
-    const manipulated = await ImageManipulator.manipulateAsync(
-      result.assets[0].uri,
-      [{ resize: { width: 512, height: 512 } }],
-      { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG, base64: true }
-    );
-
-    onChange({ ...value, photoUri: manipulated.uri, photoBase64: manipulated.base64 });
+  const changePhoto = async () => {
+    const picked = await pickAvatar();
+    if (picked) onChange({ ...value, photoUri: picked.uri, photoBase64: picked.base64 });
   };
 
   return (
     <View>
-      <TouchableOpacity onPress={pickPhoto} style={styles.photoRow} activeOpacity={0.8}>
-        <Avatar displayName={value.displayName} photoUrl={value.photoUri} size={72} />
-        <Text style={styles.photoLabel}>Tap to change photo</Text>
-      </TouchableOpacity>
+      {!hidePhoto && (
+        <TouchableOpacity onPress={changePhoto} style={styles.photoRow} activeOpacity={0.8}>
+          <View>
+            <Avatar displayName={value.displayName} photoUrl={value.photoUri} size={88} />
+            <View style={styles.cameraBadge}>
+              <Icon name="camera" size={13} color={colors.white} />
+            </View>
+          </View>
+          <Text style={styles.photoLabel}>Change photo</Text>
+        </TouchableOpacity>
+      )}
 
       <Text style={styles.label}>How many days a week is your goal?</Text>
       <View style={styles.row}>
@@ -161,7 +152,13 @@ const WheelTimePicker = ({ time, onChange }: WheelTimePickerProps) => {
 
 const createStyles = (colors: ThemeColors, typography: Typography) => StyleSheet.create({
   photoRow: { alignItems: 'center', marginBottom: spacing.lg },
-  photoLabel: { ...typography.caption, marginTop: spacing.xs, color: colors.primary },
+  photoLabel: { ...typography.caption, marginTop: spacing.sm, color: colors.primary, fontWeight: '700' },
+  cameraBadge: {
+    position: 'absolute', bottom: 0, right: 0,
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: colors.surface,
+  },
   label: { ...typography.label, marginBottom: spacing.sm, marginTop: spacing.md },
   row: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
   wheelRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: spacing.md, gap: spacing.xs },
@@ -170,9 +167,9 @@ const createStyles = (colors: ThemeColors, typography: Typography) => StyleSheet
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: radius.full,
-    backgroundColor: colors.background,
+    backgroundColor: colors.glassFill,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.glassBorder,
     marginRight: spacing.sm,
   },
   chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
